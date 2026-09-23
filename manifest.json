@@ -1,7 +1,7 @@
 {
-  "name": "Submersion Guadeloupe — Terrain",
-  "short_name": "Submersion Terrain",
-  "description": "Suivi de position et signalement d'événements pour les agents en mission — Submersion Guadeloupe",
+  "name": "CARTO PCS — Terrain",
+  "short_name": "CARTO PCS Terrain",
+  "description": "Suivi de position et signalement d'événements pour les agents en mission — CARTO PCS",
   "start_url": "agent.html",
   "scope": ".",
   "display": "standalone",

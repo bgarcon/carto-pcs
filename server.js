@@ -459,7 +459,7 @@ function lanAddresses(){
 server.listen(PORT, "0.0.0.0", () => {
   const scheme = server instanceof https.Server ? "https" : "http";
   const url = `${scheme}://localhost:${PORT}/index.html`;
-  console.log(`Submersion Guadeloupe : serveur demarre sur ${url}`);
+  console.log(`CARTO PCS : serveur demarre sur ${url}`);
   lanAddresses().forEach((ip) => {
     console.log(`  Reseau local : ${scheme}://${ip}:${PORT}/index.html  (supervision)`);
     console.log(`                 ${scheme}://${ip}:${PORT}/agent.html  (terrain)`);

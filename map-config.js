@@ -1,5 +1,5 @@
 // Config partagée entre index.html et settings.html (bornes de la carte)
-const MAP_CONFIG_KEY = 'submersion.mapConfig';
+const MAP_CONFIG_KEY = 'carto-pcs.mapConfig';
 
 const MAP_CONFIG_DEFAULTS = {
   minLon: -61.9,
@@ -42,7 +42,7 @@ function saveMapConfig(config){
 }
 
 // Préréglages de caméra (positions nommées + vue par défaut)
-const MAP_PRESETS_KEY = 'submersion.cameraPresets';
+const MAP_PRESETS_KEY = 'carto-pcs.cameraPresets';
 
 const BUILTIN_DEFAULT_VIEW = { lon: -61.53, lat: 16.25, zoom: 10.2, pitch: 55, bearing: -15 };
 
@@ -97,7 +97,7 @@ function normalizePreset(preset){
 // Export / import global de la config (bornes carte + préréglages caméra)
 function exportConfigBundle(){
   return {
-    type: 'submersion-config',
+    type: 'carto-pcs-config',
     version: 1,
     exportedAt: new Date().toISOString(),
     mapConfig: loadMapConfig(),
@@ -112,7 +112,7 @@ function downloadConfigBundle(){
   const a = document.createElement('a');
   const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `submersion-config-${stamp}.json`;
+  a.download = `carto-pcs-config-${stamp}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -125,7 +125,7 @@ function importConfigBundle(bundle){
     throw new Error('Fichier invalide.');
   }
   if (!bundle.mapConfig || !bundle.cameraPresets) {
-    throw new Error("Ce fichier ne contient pas une configuration Submersion valide.");
+    throw new Error("Ce fichier ne contient pas une configuration CARTO PCS valide.");
   }
 
   const mapConfig = { ...MAP_CONFIG_DEFAULTS, ...bundle.mapConfig };

@@ -1,6 +1,6 @@
 // Service worker minimal — installabilité PWA pour agent.html, pas d'offline complet
 // (l'app dépend du réseau pour le WebSocket, l'upload et les tuiles carto).
-const CACHE_NAME = 'submersion-terrain-v1';
+const CACHE_NAME = 'carto-pcs-terrain-v1';
 const APP_SHELL = [
   'agent.html',
   'agent-config.js',

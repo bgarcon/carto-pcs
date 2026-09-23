@@ -1,6 +1,6 @@
 // Identité de l'agent terrain, séparée de map-config.js (config carte, partagée
 // avec settings.html) — propre à agent.html, un seul champ : le nom saisi une fois.
-const AGENT_NAME_KEY = 'submersion.agentName';
+const AGENT_NAME_KEY = 'carto-pcs.agentName';
 
 function loadAgentName(){
   try {
