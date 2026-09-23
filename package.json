@@ -1,0 +1,14 @@
+{
+  "name": "submersion-guadeloupe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cartographie 3D de la montée des eaux, Guadeloupe — supervision + suivi terrain temps réel",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "formidable": "^3.5.2",
+    "ws": "^8.18.0"
+  }
+}

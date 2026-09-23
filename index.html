@@ -1,0 +1,3120 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Submersion Guadeloupe</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5c3.5 5 7 9.2 7 13a7 7 0 1 1-14 0c0-3.8 3.5-8 7-13z' fill='none' stroke='%233ec6e0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.13.0/dist/maplibre-gl.css">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.13.0/dist/maplibre-gl.js"></script>
+<script src="map-config.js"></script>
+<style>
+:root{
+  --bg:#0a1420;
+  --panel:#0f1e2e;
+  --panel-2:#132a3f;
+  --line:#1e3a52;
+  --text:#e8eef2;
+  --text-dim:#8fa3b3;
+  --water:#3ec6e0;
+  --water-dim:#2a5a6b;
+  --alert:#ff6b4a;
+  --alert-dim:#8a4536;
+  --good:#5fd68a;
+}
+:root:not([data-theme="light"]){ }
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  overflow:hidden;
+}
+#map{
+  position:absolute;
+  inset:0;
+  background:var(--bg);
+}
+.maplibregl-ctrl-attrib{
+  font-size:10px;
+  background:rgba(10,20,32,0.7) !important;
+  color:var(--text-dim) !important;
+}
+.maplibregl-ctrl-attrib a{ color:var(--text-dim) !important; }
+.maplibregl-ctrl-bottom-right{ display:none; }
+
+.hud{
+  position:absolute;
+  z-index:5;
+  pointer-events:none;
+}
+.hud > *{ pointer-events:auto; }
+
+.header{
+  top:0; left:0; right:0;
+  padding:18px 22px 14px;
+  display:flex;
+  align-items:baseline;
+  gap:14px;
+  background:linear-gradient(to bottom, rgba(10,16,26,0.92), rgba(10,16,26,0));
+}
+.header h1{
+  font-family:"Fraunces", serif;
+  font-weight:700;
+  font-size:22px;
+  margin:0;
+  letter-spacing:0.2px;
+}
+.header h1 .accent{ color:var(--water); font-style:italic; font-weight:600; }
+.header .sub{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+}
+.settings-link{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  text-decoration:none;
+  transition:all .15s ease;
+}
+.settings-link:hover{ border-color:var(--water); color:var(--water); }
+.settings-link i{ font-size:13px; }
+
+.panel{
+  left:22px;
+  bottom:22px;
+  width:340px;
+  max-width:calc(100vw - 44px);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px 20px 18px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.45);
+  display:none;
+}
+.panel.visible{ display:block; }
+.panel-label-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
+.panel-label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text-dim);
+}
+.panel-label svg{ width:13px; height:13px; flex-shrink:0; fill:none; stroke:var(--water); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+.toggle-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  border-radius:7px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.toggle-btn svg{ width:14px; height:14px; fill:none; stroke:var(--text-dim); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; transition:stroke .15s ease; }
+.toggle-btn:hover{ border-color:var(--water); }
+.toggle-btn.active{ background:var(--water-dim); border-color:var(--water); }
+.toggle-btn.active svg{ stroke:var(--water); }
+
+.level-row{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.level-value{
+  font-family:"Fraunces", serif;
+  font-weight:600;
+  font-size:38px;
+  line-height:1;
+  color:var(--water);
+  font-variant-numeric: tabular-nums;
+}
+.level-value sup{ font-size:16px; color:var(--text-dim); font-weight:400; margin-left:3px; }
+.level-preset{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+  text-align:right;
+  max-width:140px;
+}
+
+input[type="range"]{
+  -webkit-appearance:none;
+  width:100%;
+  height:6px;
+  border-radius:3px;
+  background:linear-gradient(to right, var(--water-dim), var(--alert-dim));
+  outline:none;
+  margin:8px 0 4px;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:var(--water);
+  border:3px solid var(--bg);
+  box-shadow:0 0 0 1px var(--water), 0 4px 10px rgba(0,0,0,0.5);
+  cursor:pointer;
+}
+input[type="range"]::-moz-range-thumb{
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:var(--water);
+  border:3px solid var(--bg);
+  box-shadow:0 0 0 1px var(--water);
+  cursor:pointer;
+}
+.scale-ticks{
+  display:flex;
+  justify-content:space-between;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  margin-bottom:16px;
+}
+
+.presets{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:6px;
+  margin-bottom:16px;
+}
+.preset-btn{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 4px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.preset-btn:hover{ border-color:var(--water); color:var(--text); }
+.preset-btn.active{ background:var(--water-dim); border-color:var(--water); color:var(--text); }
+
+.stats{
+  display:flex;
+  gap:10px;
+  border-top:1px solid var(--line);
+  padding-top:14px;
+}
+.stat{ flex:1; }
+.stat-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--text-dim);
+  margin-bottom:3px;
+}
+.stat-value{
+  font-family:"Fraunces", serif;
+  font-weight:600;
+  font-size:19px;
+  color:var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.stat-value.alert{ color:var(--alert); }
+
+.camera-panel{
+  top:78px;
+  right:22px;
+  width:230px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:14px 16px 16px;
+  display:none;
+}
+.camera-panel.visible{ display:block; }
+.camera-panel .panel-label{ margin-bottom:10px; }
+.cam-row{
+  margin-bottom:12px;
+}
+.cam-row:last-child{ margin-bottom:0; }
+.cam-row-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:4px;
+}
+.cam-row-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--text-dim);
+}
+.cam-row-value{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11.5px;
+  color:var(--water);
+  font-variant-numeric: tabular-nums;
+}
+.cam-row input[type="range"]{
+  margin:0;
+  height:4px;
+}
+.cam-row input[type="range"]::-webkit-slider-thumb{
+  width:15px;
+  height:15px;
+}
+.cam-row input[type="range"]::-moz-range-thumb{
+  width:15px;
+  height:15px;
+}
+.cam-reset{
+  width:100%;
+  margin-top:12px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 4px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.cam-reset:hover{ border-color:var(--water); color:var(--text); }
+
+.loading{
+  position:absolute;
+  inset:0;
+  background:var(--bg);
+  z-index:20;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  transition:opacity .5s ease;
+}
+.loading .spinner{
+  width:34px; height:34px;
+  border-radius:50%;
+  border:3px solid var(--line);
+  border-top-color:var(--water);
+  animation:spin 0.9s linear infinite;
+}
+.loading p{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:12px;
+  color:var(--text-dim);
+  letter-spacing:0.5px;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+.admin-toggle{
+  margin-left:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.admin-toggle:hover{ border-color:var(--water); color:var(--water); }
+.admin-toggle.active{ background:var(--water-dim); border-color:var(--water); color:var(--water); }
+.admin-toggle.disabled{ opacity:0.4; }
+.admin-toggle.disabled:hover{ border-color:var(--line); color:var(--text-dim); }
+.admin-toggle.has-activity:not(.active){ border-color:#ff4d5e; color:#ff4d5e; }
+.admin-toggle i{ font-size:13px; }
+
+.admin-panel{
+  top:78px;
+  left:22px;
+  width:280px;
+  max-width:calc(100vw - 44px);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:16px 18px 18px;
+  display:none;
+}
+.admin-panel.visible{ display:block; }
+.admin-panel .panel-label{ margin-bottom:12px; }
+
+.admin-add{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+}
+.admin-add input[type="text"]{
+  flex:1;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  color:var(--text);
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:12.5px;
+  padding:8px 10px;
+  outline:none;
+  min-width:0;
+  transition:border-color .15s ease;
+}
+.admin-add input[type="text"]:focus{ border-color:var(--water); }
+.admin-basemap-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--text-dim);
+  margin-bottom:8px;
+}
+.admin-basemap{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-bottom:14px;
+}
+.admin-basemap-btn{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 4px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.admin-basemap-btn:hover{ border-color:var(--water); color:var(--text); }
+.admin-basemap-btn.active{ background:var(--water-dim); border-color:var(--water); color:var(--text); }
+.admin-item-basemap{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:0.4px;
+  margin-right:4px;
+  flex-shrink:0;
+}
+.admin-add-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  border-radius:8px;
+  background:var(--water-dim);
+  border:1px solid var(--water);
+  color:var(--text);
+  cursor:pointer;
+  flex-shrink:0;
+  transition:background .15s ease;
+}
+.admin-add-btn:hover{ background:var(--water); color:var(--bg); }
+
+.admin-hint{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  color:var(--text-dim);
+  opacity:0.75;
+  margin:-8px 0 14px;
+}
+
+.admin-empty{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+  opacity:0.7;
+  padding:8px 0;
+}
+
+.admin-filter{ margin-bottom:10px; }
+.admin-filter select{
+  width:100%;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:8px 10px;
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:12.5px;
+  color:var(--text);
+  cursor:pointer;
+}
+.admin-filter select:focus{ outline:none; border-color:var(--water); }
+
+.admin-list{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  max-height:320px;
+  overflow-y:auto;
+}
+.admin-group{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.admin-group-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:0.8px;
+  color:var(--text-dim);
+  opacity:0.8;
+  padding:0 2px;
+}
+.admin-item{
+  display:flex;
+  flex-direction:column;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 8px 7px 12px;
+}
+.admin-item.drag-over{ border-color:var(--water); }
+.admin-item.dragging{ opacity:0.4; }
+.admin-item.is-default{ border-color:var(--water); }
+.admin-item-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.admin-item-drag-handle{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  flex-shrink:0;
+  color:var(--text-dim);
+  opacity:0.5;
+  cursor:grab;
+  font-size:11px;
+}
+.admin-item-drag-handle:hover{ opacity:1; }
+.admin-item-name{
+  flex:1;
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:12.5px;
+  color:var(--text);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.admin-item-icon-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  border-radius:6px;
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  flex-shrink:0;
+  transition:all .15s ease;
+}
+.admin-item-icon-btn i{ font-size:11.5px; }
+.admin-item-icon-btn:hover{ background:var(--panel); color:var(--text); }
+.admin-item-icon-btn.go:hover{ color:var(--water); }
+.admin-item-icon-btn.settings.active{ background:var(--water-dim); color:var(--water); }
+
+.admin-item-settings{
+  display:none;
+  flex-direction:column;
+  gap:6px;
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid var(--line);
+}
+.admin-item-settings.visible{ display:flex; }
+.admin-item-settings-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  background:transparent;
+  border:none;
+  border-radius:6px;
+  padding:7px 8px;
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:12px;
+  color:var(--text-dim);
+  cursor:pointer;
+  text-align:left;
+  transition:all .15s ease;
+}
+.admin-item-settings-btn i{ width:14px; text-align:center; font-size:11.5px; flex-shrink:0; }
+.admin-item-settings-btn:hover{ background:var(--panel); color:var(--text); }
+.admin-item-settings-btn.star.is-default{ color:var(--water); }
+.admin-item-settings-btn.del:hover{ color:var(--alert); }
+.admin-item-settings-rename,
+.admin-item-settings-group{
+  display:flex;
+  gap:6px;
+}
+.admin-item-settings-rename input,
+.admin-item-settings-group input,
+.admin-item-settings-group select{
+  flex:1;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:6px 8px;
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:12px;
+  color:var(--text);
+  min-width:0;
+  cursor:pointer;
+}
+.admin-item-settings-group input{ cursor:text; }
+.admin-item-settings-rename input:focus,
+.admin-item-settings-group input:focus,
+.admin-item-settings-group select:focus{ outline:none; border-color:var(--water); }
+.admin-item-settings-group-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--text-dim);
+  opacity:0.75;
+  margin-top:2px;
+}
+
+.admin-io{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+}
+.admin-io-btn{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:8px 4px;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.admin-io-btn:hover{ border-color:var(--water); color:var(--text); }
+.admin-io-btn i{ font-size:11px; }
+
+.admin-io-msg{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  margin-top:8px;
+  display:none;
+}
+.admin-io-msg.visible{ display:block; }
+.admin-io-msg.ok{ color:var(--good); }
+.admin-io-msg.error{ color:var(--alert); }
+
+.poi-toggle{
+  margin-left:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--text-dim);
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.poi-toggle:hover{ border-color:var(--water); color:var(--water); }
+.poi-toggle.active{ background:var(--water-dim); border-color:var(--water); color:var(--water); }
+.poi-toggle i{ font-size:13px; }
+
+.poi-panel{
+  top:78px;
+  left:22px;
+  width:290px;
+  max-width:calc(100vw - 44px);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:16px 18px 14px;
+  display:none;
+}
+
+.weather-panel{
+  top:78px;
+  left:22px;
+  width:290px;
+  max-width:calc(100vw - 44px);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:16px 18px 16px;
+  display:none;
+}
+.weather-panel.visible{ display:block; }
+.weather-panel .panel-label-row{ gap:10px; }
+.weather-panel .panel-label{ flex-shrink:1; min-width:0; }
+.weather-panel .panel-label i{ font-size:13px; color:var(--water); margin-right:8px; }
+.weather-updated{
+  flex-shrink:0;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  white-space:nowrap;
+}
+.weather-loading, .weather-error{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11.5px;
+  color:var(--text-dim);
+  padding:8px 0 2px;
+}
+.weather-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:8px;
+}
+.weather-item{
+  min-width:0;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.weather-item-icon{
+  width:26px;
+  height:26px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--water);
+  font-size:16px;
+}
+.weather-item-icon .wind-arrow{
+  display:inline-block;
+  font-size:16px;
+  transition:transform .2s ease;
+}
+.weather-item-text{ min-width:0; }
+.weather-item-value{
+  font-family:"Fraunces", serif;
+  font-weight:600;
+  font-size:17px;
+  line-height:1.1;
+  color:var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space:nowrap;
+}
+.weather-item-value sup{ font-size:11px; color:var(--text-dim); font-weight:400; margin-left:2px; }
+.weather-item-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  color:var(--text-dim);
+  margin-top:1px;
+  white-space:normal;
+  overflow-wrap:break-word;
+}
+.weather-source{
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid var(--line);
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  color:var(--text-dim);
+  text-align:center;
+}
+.weather-source a{ color:var(--text-dim); text-decoration:none; }
+.weather-source a:hover{ color:var(--water); }
+
+.cyclone-panel{ top:78px; left:328px; }
+
+.agents-panel{ top:78px; right:22px; width:270px; }
+.agents-panel .panel-label i{ font-size:13px; color:var(--water); margin-right:8px; }
+.agent-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:9px 10px;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:border-color .15s ease;
+}
+.agent-row:last-child{ margin-bottom:0; }
+.agent-row:hover{ border-color:var(--water); }
+.agent-row-dot{
+  width:9px; height:9px;
+  border-radius:50%;
+  background:var(--good);
+  flex-shrink:0;
+  box-shadow:0 0 0 3px rgba(95,214,138,0.18);
+}
+.agent-row-text{ flex:1; min-width:0; }
+.agent-row-name{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.agent-row-time{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+}
+
+.agent-marker-anchor{
+  position:absolute;
+  top:0; left:0;
+  width:30px; height:30px;
+  cursor:pointer;
+}
+.agent-marker{
+  width:30px; height:30px;
+  border-radius:50%;
+  background:var(--water-dim);
+  border:2px solid var(--water);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 3px 10px rgba(0,0,0,0.5);
+}
+.agent-marker i{ font-size:12px; color:var(--water); }
+.agent-marker::after{
+  content:'';
+  position:absolute;
+  inset:-6px;
+  border-radius:50%;
+  border:1.5px solid var(--water);
+  opacity:0.5;
+  animation:agent-pulse 2s ease-out infinite;
+}
+@keyframes agent-pulse{
+  0%{ transform:scale(0.7); opacity:0.6; }
+  100%{ transform:scale(1.6); opacity:0; }
+}
+.agent-popup-name{
+  font-family:"Fraunces", serif;
+  font-weight:600;
+  font-size:14px;
+  margin-bottom:3px;
+}
+.agent-popup-time{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+}
+
+.event-marker-anchor{
+  position:absolute;
+  top:0; left:0;
+  width:26px; height:26px;
+  cursor:pointer;
+}
+.event-marker{
+  width:26px; height:26px;
+  border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  background:var(--alert-dim);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:2px solid var(--alert);
+  box-shadow:0 3px 8px rgba(0,0,0,0.5);
+}
+.event-marker i{ transform:rotate(45deg); font-size:11px; color:#fff; }
+.event-popup-photo{
+  width:100%;
+  max-width:220px;
+  border-radius:8px;
+  margin-bottom:8px;
+  display:block;
+}
+.event-popup-meta{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  margin-bottom:4px;
+}
+.event-popup-note{
+  font-size:12.5px;
+  line-height:1.5;
+  color:var(--text);
+}
+.cyclone-basin-switch{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-bottom:12px;
+}
+.cyclone-basin-btn{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:7px 4px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.cyclone-basin-btn:hover{ border-color:var(--water); color:var(--text); }
+.cyclone-basin-btn.active{ background:var(--water-dim); border-color:var(--water); color:var(--text); }
+.cyclone-empty{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11.5px;
+  color:var(--text-dim);
+  padding:8px 0 2px;
+}
+.cyclone-storm{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:8px;
+}
+.cyclone-storm:last-child{ margin-bottom:0; }
+.cyclone-storm-name{
+  font-weight:700;
+  font-size:13px;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.cyclone-cat{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  padding:1px 7px;
+  border-radius:20px;
+  background:var(--water-dim);
+  color:var(--water);
+  border:1px solid var(--water);
+}
+.cyclone-storm-meta{
+  margin-top:6px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+}
+.cyclone-storm-meta b{ color:var(--text); font-weight:600; }
+.cyclone-storm-adv{
+  margin-top:6px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  color:var(--text-dim);
+}
+.poi-panel.visible{ display:block; }
+.poi-panel .panel-label-row{ margin-bottom:10px; }
+
+.poi-list{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  max-height:320px;
+  overflow-y:auto;
+}
+.poi-cat-group{
+  border-radius:7px;
+  overflow:hidden;
+}
+.poi-cat{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:6px 6px;
+  border-radius:7px;
+  transition:background .15s ease;
+}
+.poi-cat:hover{ background:var(--panel-2); }
+.poi-cat input[type="checkbox"]{
+  width:14px;
+  height:14px;
+  accent-color:var(--water);
+  cursor:pointer;
+  flex-shrink:0;
+}
+.poi-cat-chevron{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  flex-shrink:0;
+  padding:0;
+  transition:transform .15s ease;
+}
+.poi-cat-chevron i{ font-size:9px; }
+.poi-cat-group.expanded .poi-cat-chevron{ transform:rotate(90deg); }
+.poi-cat-swatch{
+  width:20px;
+  height:20px;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  opacity:0.35;
+  transition:opacity .15s ease;
+}
+.poi-cat input:checked ~ .poi-cat-swatch{ opacity:1; }
+.poi-cat-swatch i{ font-size:10px; color:#fff; }
+.poi-cat-label{
+  flex:1;
+  min-width:0;
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:12.5px;
+  color:var(--text-dim);
+  cursor:pointer;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  transition:color .15s ease;
+}
+.poi-cat input:checked ~ .poi-cat-label{ color:var(--text); }
+
+.poi-place-list{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .2s ease;
+}
+.poi-cat-group.expanded .poi-place-list{ max-height:600px; }
+.poi-place{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:5px 6px 5px 34px;
+  border-radius:7px;
+}
+.poi-place:hover{ background:var(--panel-2); }
+.poi-place input[type="checkbox"]{
+  width:13px;
+  height:13px;
+  accent-color:var(--water);
+  cursor:pointer;
+  flex-shrink:0;
+}
+.poi-place-label{
+  flex:1;
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:11.5px;
+  color:var(--text-dim);
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.poi-cat-count{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  opacity:0.7;
+}
+.poi-cat-go{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  border-radius:6px;
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  cursor:pointer;
+  flex-shrink:0;
+  transition:all .15s ease;
+}
+.poi-cat-go:hover{ background:var(--panel); color:var(--water); }
+.poi-cat-go i{ font-size:10.5px; }
+
+.poi-actions{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--line);
+}
+.poi-actions button{
+  flex:1;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:7px;
+  padding:6px 4px;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.poi-actions button:hover{ border-color:var(--water); color:var(--text); }
+
+.poi-marker-anchor{
+  position:absolute;
+  top:0;
+  left:0;
+  width:26px;
+  height:26px;
+  cursor:pointer;
+}
+.poi-marker{
+  width:26px;
+  height:26px;
+  border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:2px solid rgba(255,255,255,0.85);
+  box-shadow:0 3px 8px rgba(0,0,0,0.5);
+}
+.poi-marker i{
+  transform:rotate(45deg);
+  font-size:11px;
+  color:#fff;
+}
+
+.maplibregl-popup-content{
+  background:var(--panel) !important;
+  color:var(--text) !important;
+  border:1px solid var(--line) !important;
+  border-radius:10px !important;
+  padding:14px !important;
+  font-family:"IBM Plex Sans", sans-serif !important;
+  box-shadow:0 12px 30px rgba(0,0,0,0.5) !important;
+}
+.maplibregl-popup-tip{ display:none !important; }
+.maplibregl-popup-close-button{
+  color:var(--text-dim) !important;
+  font-size:16px !important;
+  padding:4px 8px !important;
+}
+.poi-popup-cat{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:9.5px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--text-dim);
+  margin-bottom:4px;
+}
+.poi-popup-name{
+  font-family:"Fraunces", serif;
+  font-weight:600;
+  font-size:15px;
+  margin-bottom:4px;
+}
+.poi-popup-desc{
+  font-size:12px;
+  line-height:1.5;
+  color:var(--text-dim);
+}
+
+.draggable-panel{ touch-action:none; }
+.drag-handle{ cursor:grab; position:relative; }
+.drag-handle.dragging{ cursor:grabbing; }
+.draggable-panel.dragging{ transition:none !important; opacity:0.92; box-shadow:0 24px 60px rgba(0,0,0,0.55); }
+.drag-handle-icon{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:20px;
+  height:20px;
+  font-size:11px;
+  color:var(--text-dim);
+  opacity:0;
+  transform:scale(0.85);
+  transition:opacity .15s ease, transform .15s ease, color .15s ease;
+  flex-shrink:0;
+}
+.drag-handle:hover .drag-handle-icon,
+.drag-handle.dragging .drag-handle-icon{
+  opacity:1;
+  transform:scale(1);
+}
+.drag-handle.dragging .drag-handle-icon{ color:var(--water); }
+.panel-label.drag-handle{ justify-content:space-between; }
+.drag-handle-icon.drag-handle-icon--floating{
+  position:absolute;
+  top:10px;
+  right:10px;
+  margin-left:0;
+}
+
+@media (max-width:640px){
+  .camera-panel{ display:none; }
+  .admin-panel{ display:none !important; }
+  .poi-panel{ display:none !important; }
+  .panel{ width:calc(100vw - 44px); }
+  .weather-panel{ width:calc(100vw - 44px); }
+  .agents-panel{ right:22px; left:22px; width:auto; }
+  .header h1{ font-size:18px; }
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <p>CHARGEMENT DU RELIEF — GUADELOUPE</p>
+</div>
+
+<div class="hud header">
+  <h1>Submersion <span class="accent">Guadeloupe</span></h1>
+  <div class="sub">Cartographie 3D — Impact de la montée des eaux</div>
+  <button class="admin-toggle" id="weatherToggle" title="Météo"><i class="fa-solid fa-cloud-sun"></i></button>
+  <button class="admin-toggle" id="radarToggle" title="Nuages / pluie (temps réel)"><i class="fa-solid fa-cloud-rain"></i></button>
+  <button class="admin-toggle" id="cycloneToggle" title="Cyclones actifs (NHC, temps réel)"><i class="fa-solid fa-hurricane"></i></button>
+  <button class="admin-toggle" id="seaLevelToggle" title="Niveau de la mer"><i class="fa-solid fa-water"></i></button>
+  <button class="admin-toggle" id="adminToggle" title="Positions préréglées"><i class="fa-solid fa-map-pin"></i></button>
+  <button class="poi-toggle" id="poiToggle" title="Points d'intérêt"><i class="fa-solid fa-list"></i></button>
+  <button class="admin-toggle" id="roadsToggle" title="Axes routiers"><i class="fa-solid fa-road"></i></button>
+  <button class="admin-toggle" id="communeBoundaryToggle" title="Limite communale"><i class="fa-solid fa-draw-polygon"></i></button>
+  <button class="admin-toggle" id="cameraToggle" title="Caméra"><i class="fa-solid fa-video"></i></button>
+  <button class="admin-toggle" id="agentsToggle" title="Agents terrain (temps réel)"><i class="fa-solid fa-person-hiking"></i></button>
+  <a class="settings-link" href="settings.html" title="Paramètres de la carte"><i class="fa-solid fa-gear"></i></a>
+</div>
+
+<div class="hud poi-panel" id="poiPanel">
+  <div class="panel-label-row">
+    <div class="panel-label"><svg viewBox="0 0 24 24"><path d="M12 2.5c3.5 5 7 9.2 7 13a7 7 0 1 1-14 0c0-3.8 3.5-8 7-13z"/></svg>Points d'intérêt</div>
+  </div>
+  <div class="poi-list" id="poiList"></div>
+  <div class="poi-actions">
+    <button id="poiAllBtn">Tout afficher</button>
+    <button id="poiNoneBtn">Tout masquer</button>
+  </div>
+</div>
+
+<div class="hud weather-panel" id="weatherPanel">
+  <div class="panel-label-row">
+    <div class="panel-label"><i class="fa-solid fa-cloud-sun"></i>Météo — Deshaies</div>
+    <div class="weather-updated" id="weatherUpdated">—</div>
+  </div>
+  <div class="weather-body" id="weatherBody">
+    <div class="weather-loading">Chargement…</div>
+  </div>
+</div>
+
+<div class="hud weather-panel cyclone-panel" id="cyclonePanel">
+  <div class="panel-label-row">
+    <div class="panel-label"><i class="fa-solid fa-hurricane"></i>Cyclones</div>
+    <div class="weather-updated" id="cycloneUpdated">—</div>
+  </div>
+  <div class="cyclone-basin-switch" id="cycloneBasinSwitch">
+    <button type="button" class="cyclone-basin-btn" data-basin="AT">Atlantique</button>
+    <button type="button" class="cyclone-basin-btn" data-basin="EP">Pacifique Est</button>
+  </div>
+  <div class="weather-body" id="cycloneBody">
+    <div class="weather-loading">Chargement…</div>
+  </div>
+</div>
+
+<div class="hud weather-panel agents-panel" id="agentsPanel">
+  <div class="panel-label-row">
+    <div class="panel-label"><i class="fa-solid fa-person-hiking"></i>Agents terrain</div>
+    <div class="weather-updated" id="agentsUpdated">—</div>
+  </div>
+  <div class="weather-body" id="agentsBody">
+    <div class="weather-loading">Aucun agent connecté</div>
+  </div>
+</div>
+
+<div class="hud admin-panel" id="adminPanel">
+  <div class="panel-label"><svg viewBox="0 0 24 24"><path d="M12 2.5c3.5 5 7 9.2 7 13a7 7 0 1 1-14 0c0-3.8 3.5-8 7-13z"/></svg>Positions préréglées</div>
+
+  <div class="admin-basemap-label">Fond de carte</div>
+  <div class="admin-basemap" id="adminBasemap">
+    <div class="admin-basemap-btn" data-basemap="ortho">Ortho</div>
+    <div class="admin-basemap-btn" data-basemap="plan">Plan IGN</div>
+    <div class="admin-basemap-btn" data-basemap="dark">Sombre</div>
+  </div>
+
+  <div class="admin-add">
+    <input type="text" id="adminPresetName" placeholder="Nom de la position…" maxlength="40">
+    <button class="admin-add-btn" id="adminAddBtn" title="Enregistrer la vue actuelle"><i class="fa-solid fa-plus"></i></button>
+  </div>
+  <div class="admin-hint">Enregistre la vue actuelle (position, fond de carte, couches, niveau de submersion) sous ce nom</div>
+
+  <div class="admin-filter">
+    <select id="adminGroupFilter"><option value="">Tous les groupes</option></select>
+  </div>
+
+  <div class="admin-list" id="adminList"></div>
+  <div class="admin-empty" id="adminEmpty">Aucune position enregistrée</div>
+
+  <div class="admin-io">
+    <button class="admin-io-btn" id="adminExportBtn"><i class="fa-solid fa-file-export"></i>Exporter</button>
+    <button class="admin-io-btn" id="adminImportBtn"><i class="fa-solid fa-file-import"></i>Importer</button>
+    <input type="file" id="adminImportFile" accept="application/json,.json" hidden>
+  </div>
+  <div class="admin-io-msg" id="adminIoMsg"></div>
+</div>
+
+<div class="hud camera-panel" id="cameraPanel">
+  <div class="panel-label"><svg viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M20 8V6a2 2 0 0 0-2-2h-2M20 16v2a2 2 0 0 1-2 2h-2"/><circle cx="12" cy="12" r="3.5"/></svg>Caméra</div>
+
+  <div class="cam-row">
+    <div class="cam-row-head"><span class="cam-row-label">Longitude</span><span class="cam-row-value" id="camLonVal">-61.530</span></div>
+    <input type="range" id="camLon" min="-61.9" max="-61.1" step="0.001" value="-61.53">
+  </div>
+  <div class="cam-row">
+    <div class="cam-row-head"><span class="cam-row-label">Latitude</span><span class="cam-row-value" id="camLatVal">16.250</span></div>
+    <input type="range" id="camLat" min="15.85" max="16.55" step="0.001" value="16.25">
+  </div>
+  <div class="cam-row">
+    <div class="cam-row-head"><span class="cam-row-label">Zoom</span><span class="cam-row-value" id="camZoomVal">10.2</span></div>
+    <input type="range" id="camZoom" min="0" max="22" step="0.1" value="10.2">
+  </div>
+  <div class="cam-row">
+    <div class="cam-row-head"><span class="cam-row-label">Inclinaison (pitch)</span><span class="cam-row-value" id="camPitchVal">55</span></div>
+    <input type="range" id="camPitch" min="0" max="85" step="1" value="55">
+  </div>
+  <div class="cam-row">
+    <div class="cam-row-head"><span class="cam-row-label">Orientation (bearing)</span><span class="cam-row-value" id="camBearingVal">-15</span></div>
+    <input type="range" id="camBearing" min="-180" max="180" step="1" value="-15">
+  </div>
+
+  <button class="cam-reset" id="camReset">Réinitialiser</button>
+</div>
+
+<div class="hud panel" id="seaLevelPanel">
+  <div class="panel-label-row">
+    <div class="panel-label"><svg viewBox="0 0 24 24"><path d="M12 2.5c3.5 5 7 9.2 7 13a7 7 0 1 1-14 0c0-3.8 3.5-8 7-13z"/></svg>Niveau de la mer</div>
+  </div>
+  <div class="level-row">
+    <div class="level-value" id="levelValue">0<sup>m</sup></div>
+    <div class="level-preset" id="levelPreset">Niveau actuel</div>
+  </div>
+  <input type="range" id="seaLevel" min="0" max="10" step="0.1" value="0">
+  <div class="scale-ticks"><span>0m</span><span>2.5m</span><span>5m</span><span>7.5m</span><span>10m</span></div>
+
+  <div class="presets">
+    <div class="preset-btn" data-level="0.3">2050<br>optimiste</div>
+    <div class="preset-btn" data-level="1">2100<br>GIEC moyen</div>
+    <div class="preset-btn" data-level="2">2100<br>pessimiste</div>
+    <div class="preset-btn" data-level="5">extrême<br>simulation</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Zones basses</div>
+      <div class="stat-value alert" id="statRisk">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Élévation max.</div>
+      <div class="stat-value">1467<span style="font-size:12px;color:var(--text-dim)">m</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cfg = loadMapConfig();
+  const initialView = getDefaultView();
+  // Filtre houle LIDAR : les élévations sous ce seuil (m) sont traitées
+  // comme la mer (le LIDAR capture la surface des vagues au moment du
+  // survol, ce qui crée du bruit près de 0m — pas une erreur de mesure).
+  const swellThreshold = cfg.swellFilterThreshold;
+
+  // Relatif au protocole/hôte courant (pas codé en dur en http://localhost) : sinon,
+  // servi en https:// sur une IP LAN, ces requêtes http:// sont bloquées en mixed-content.
+  const tileOrigin = location.origin;
+
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      version: 8,
+      sources: {
+        'osm': {
+          type: 'raster',
+          tiles: [tileOrigin + '/ign-proxy?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
+          tileSize: 256,
+          maxzoom: 19,
+          attribution: 'IGN-F/Geoportail'
+        },
+        'plan': {
+          type: 'raster',
+          tiles: [tileOrigin + '/ign-proxy?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
+          tileSize: 256,
+          maxzoom: 19,
+          attribution: 'IGN-F/Geoportail'
+        },
+        'terrain': {
+          type: 'raster-dem',
+          tiles: [tileOrigin + '/terrain-tiles/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          encoding: 'mapbox',
+          minzoom: 9,
+          maxzoom: 15,
+          bounds: [cfg.minLon, cfg.minLat, cfg.maxLon, cfg.maxLat]
+        },
+        'roads': {
+          type: 'raster',
+          tiles: [tileOrigin + '/ign-proxy?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=TRANSPORTNETWORKS.ROADS&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}'],
+          tileSize: 256,
+          minzoom: 9,
+          maxzoom: 19,
+          bounds: [cfg.minLon, cfg.minLat, cfg.maxLon, cfg.maxLat],
+          attribution: 'IGN-F/Geoportail'
+        }
+      },
+      layers: [
+        {
+          id: 'dark-bg-layer',
+          type: 'background',
+          paint: { 'background-color': '#1c7a94' }
+        },
+        {
+          id: 'osm-layer',
+          type: 'raster',
+          source: 'osm',
+          paint: { 'raster-opacity': 1, 'raster-saturation': -0.1, 'raster-brightness-min':0.05, 'raster-brightness-max':0.95, 'raster-contrast':0.05 }
+        },
+        {
+          id: 'plan-layer',
+          type: 'raster',
+          source: 'plan',
+          layout: { visibility: 'none' },
+          paint: { 'raster-opacity': 1 }
+        },
+        {
+          id: 'roads-layer',
+          type: 'raster',
+          source: 'roads',
+          layout: { visibility: 'none' },
+          paint: { 'raster-opacity': 0.9 }
+        }
+      ],
+      sky: {
+        'sky-color': '#0a1420',
+        'sky-horizon-blend': 0.5,
+        'horizon-color': '#16354a',
+        'horizon-fog-blend': 0.6,
+        'fog-color': '#0a1420',
+        'fog-ground-blend': 0.5
+      }
+    },
+    center: [initialView.lon, initialView.lat],
+    zoom: initialView.zoom,
+    pitch: initialView.pitch,
+    bearing: initialView.bearing,
+    maxPitch: 85,
+    minZoom: cfg.minZoom,
+    maxZoom: cfg.maxZoom,
+    maxBounds: [[cfg.minLon, cfg.minLat], [cfg.maxLon, cfg.maxLat]],
+    attributionControl: true
+  });
+  window.__submersionMap = map; // référence partagée avec les IIFE indépendantes (météo, agents terrain…)
+
+  map.addControl(new maplibregl.NavigationControl({visualizePitch:true}), 'top-right');
+
+  // Tuiles manquantes en périphérie de l'emprise (IGN renvoie 404 quand une tuile
+  // n'a aucune donnée, plutôt qu'une image vide) — sans impact visuel, on évite juste
+  // de polluer la console pour les sources connues comme ayant une couverture partielle.
+  const SILENT_TILE_ERROR_SOURCES = ['roads', 'osm', 'plan', 'terrain', 'weather-radar'];
+  map.on('error', (e) => {
+    const sourceId = e.sourceId || (e.source && e.source.id);
+    if (SILENT_TILE_ERROR_SOURCES.includes(sourceId)) return;
+    console.error('Erreur de carte :', e.error || e);
+  });
+
+  // Motif de tirets pour le style de la limite communale ('solid' -> pas de dasharray)
+  function communeBoundaryDasharray(style){
+    if (style === 'dashed') return [3, 2];
+    if (style === 'dotted') return [0.1, 1.6];
+    return null;
+  }
+
+  map.on('load', () => {
+    map.setTerrain({ source: 'terrain', exaggeration: 1.5 });
+
+    // Fond hypsométrique pour le mode "Sombre" (pas de photo/plan en dessous) :
+    // distingue mer (bleu) et terres (dégradé sombre) par élévation du terrain.
+    map.addLayer({
+      id: 'dark-hypso',
+      type: 'color-relief',
+      source: 'terrain',
+      layout: { visibility: 'none' },
+      paint: {
+        'color-relief-opacity': 1,
+        'color-relief-color': [
+          'interpolate', ['linear'], ['elevation'],
+          swellThreshold, 'rgba(0,0,0,0)',
+          swellThreshold + 0.01, '#3a5a3e',
+          200, '#4d7a4a',
+          800, '#7a9a5f',
+          1467, '#c9c9a8'
+        ]
+      }
+    }, 'roads-layer');
+
+    // Teinte hypsométrique : colore directement le relief (drapé, sans
+    // artefact) en bleu sous le niveau de submersion choisi. Évite le bug
+    // MapLibre où une fill-extrusion plate se drape sur le terrain 3D
+    // au lieu de rester à une altitude absolue.
+    map.addLayer({
+      id: 'flood-fill',
+      type: 'color-relief',
+      source: 'terrain',
+      paint: {
+        'color-relief-opacity': 0.6,
+        'color-relief-color': [
+          'interpolate', ['linear'], ['elevation'],
+          -1, '#3ec6e0',
+          0, '#3ec6e0',
+          0.01, 'rgba(0,0,0,0)',
+          9000, 'rgba(0,0,0,0)'
+        ]
+      }
+    }, 'roads-layer');
+
+    // Limite communale (contour IGN Admin Express COG) — source vide, peuplée par setCommuneBoundary
+    map.addSource('commune-boundary', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+    const boundaryLayerPaint = {
+      'line-color': cfg.communeBoundaryColor,
+      'line-width': cfg.communeBoundaryWidth,
+      'line-opacity': 0.9
+    };
+    const boundaryDasharray = communeBoundaryDasharray(cfg.communeBoundaryStyle);
+    if (boundaryDasharray) boundaryLayerPaint['line-dasharray'] = boundaryDasharray;
+
+    map.addLayer({
+      id: 'commune-boundary-line',
+      type: 'line',
+      source: 'commune-boundary',
+      layout: { 'line-cap': cfg.communeBoundaryStyle === 'dotted' ? 'round' : 'butt', 'line-join': 'round' },
+      paint: boundaryLayerPaint
+    });
+
+    // Radar nuages/pluie (OpenWeatherMap) — nécessite une clé API renseignée dans les Paramètres
+    if (cfg.weatherApiKey) {
+      map.addSource('weather-radar', {
+        type: 'raster',
+        tiles: [`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${cfg.weatherApiKey}`],
+        tileSize: 256
+      });
+      map.addLayer({
+        id: 'weather-radar-layer',
+        type: 'raster',
+        source: 'weather-radar',
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': 0.7 }
+      });
+    }
+
+    // Cyclones actifs (NHC) — cône d'incertitude, trace de prévision, trace passée,
+    // points de prévision. Sources vides au départ, remplies par refreshCyclones().
+    const EMPTY_FC = { type: 'FeatureCollection', features: [] };
+    map.addSource('cyclone-cone', { type: 'geojson', data: EMPTY_FC });
+    map.addSource('cyclone-track', { type: 'geojson', data: EMPTY_FC });
+    map.addSource('cyclone-past-track', { type: 'geojson', data: EMPTY_FC });
+    map.addSource('cyclone-points', { type: 'geojson', data: EMPTY_FC });
+
+    map.addLayer({
+      id: 'cyclone-cone-fill',
+      type: 'fill',
+      source: 'cyclone-cone',
+      layout: { visibility: 'none' },
+      // Couleurs assombries pour rester lisibles sur le fond Plan IGN (clair),
+      // utilisé par défaut pour cette couche — du blanc s'y fondait presque totalement.
+      paint: { 'fill-color': '#2f4a5e', 'fill-opacity': 0.15 }
+    });
+    map.addLayer({
+      id: 'cyclone-cone-line',
+      type: 'line',
+      source: 'cyclone-cone',
+      layout: { visibility: 'none' },
+      paint: { 'line-color': '#2f4a5e', 'line-width': 1.8, 'line-dasharray': [2, 1.5] }
+    });
+    map.addLayer({
+      id: 'cyclone-past-track-line',
+      type: 'line',
+      source: 'cyclone-past-track',
+      layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#5c7486', 'line-width': 2, 'line-opacity': 0.85 }
+    });
+    map.addLayer({
+      id: 'cyclone-track-line',
+      type: 'line',
+      source: 'cyclone-track',
+      layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': '#ff4d5e', 'line-width': 2.5 }
+    });
+    // Rayon des points de prévision selon la catégorie (ssnum : -1 dépression, 0 tempête tropicale, 1-5 ouragan)
+    map.addLayer({
+      id: 'cyclone-points-circle',
+      type: 'circle',
+      source: 'cyclone-points',
+      layout: { visibility: 'none' },
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['coalesce', ['get', 'ssnum'], 0], -1, 4, 0, 5, 5, 10],
+        'circle-color': [
+          'interpolate', ['linear'], ['coalesce', ['get', 'ssnum'], 0],
+          -1, '#6fa8dc', 0, '#ffd166', 1, '#ff9f4d', 3, '#ff4d4d', 5, '#c31432'
+        ],
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5
+      }
+    });
+    map.addLayer({
+      id: 'cyclone-points-label',
+      type: 'symbol',
+      source: 'cyclone-points',
+      // N'affiche l'heure qu'aux échéances principales (0h, 24h, 48h...) — le NHC publie
+      // aussi des points intermédiaires à 12h/36h/60h qui, une fois proches sur la trace,
+      // font se chevaucher les étiquettes si on les affiche toutes.
+      filter: ['==', ['%', ['coalesce', ['get', 'tau'], 0], 24], 0],
+      layout: {
+        visibility: 'none',
+        'text-field': ['get', 'datelbl'],
+        'text-size': 10,
+        'text-offset': [0, 1.3],
+        'text-anchor': 'top',
+        'text-font': ['Noto Sans Regular'],
+        'text-allow-overlap': false,
+        'text-optional': true
+      },
+      paint: {
+        // Texte sombre + halo blanc épais : la couche s'affiche surtout sur le fond
+        // Plan IGN (clair), un texte clair illisible dessus.
+        'text-color': '#1a2b38',
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 1.6
+      }
+    });
+
+    document.getElementById('loading').style.opacity = '0';
+    setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 500);
+  });
+
+  // Sea level slider
+  const slider = document.getElementById('seaLevel');
+  const levelValue = document.getElementById('levelValue');
+  const levelPreset = document.getElementById('levelPreset');
+  const statRisk = document.getElementById('statRisk');
+  const presetBtns = document.querySelectorAll('.preset-btn');
+
+  function updateSeaLevel(val){
+    const v = parseFloat(val);
+    levelValue.innerHTML = v.toFixed(1) + '<sup>m</sup>';
+
+    if (map.getLayer('flood-fill')) {
+      map.setPaintProperty('flood-fill', 'color-relief-color', [
+        'interpolate', ['linear'], ['elevation'],
+        -1, '#3ec6e0',
+        v, '#3ec6e0',
+        v + 0.01, 'rgba(0,0,0,0)',
+        9000, 'rgba(0,0,0,0)'
+      ]);
+    }
+
+    let riskLabel, riskColor;
+    if (v <= 0.3) { riskLabel = 'Minime'; riskColor = 'var(--good)'; }
+    else if (v <= 1) { riskLabel = 'Modéré'; riskColor = '#f2c14e'; }
+    else if (v <= 2) { riskLabel = 'Élevé'; riskColor = 'var(--alert)'; }
+    else { riskLabel = 'Critique'; riskColor = 'var(--alert)'; }
+    statRisk.textContent = riskLabel;
+    statRisk.style.color = riskColor;
+
+    let matched = false;
+    presetBtns.forEach(btn => {
+      const active = Math.abs(parseFloat(btn.dataset.level) - v) < 0.05;
+      btn.classList.toggle('active', active);
+      if (active) matched = true;
+    });
+    levelPreset.textContent = matched ? '' : (v === 0 ? 'Niveau actuel' : 'Simulation manuelle');
+  }
+
+  slider.addEventListener('input', (e) => updateSeaLevel(e.target.value));
+
+  presetBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      slider.value = btn.dataset.level;
+      updateSeaLevel(btn.dataset.level);
+    });
+  });
+
+  // Camera panel — réglage fin manuel de la position de la caméra
+  const cameraToggle = document.getElementById('cameraToggle');
+  const cameraPanel = document.getElementById('cameraPanel');
+  cameraToggle.addEventListener('click', () => {
+    cameraPanel.classList.toggle('visible');
+    cameraToggle.classList.toggle('active');
+  });
+
+  const camLon = document.getElementById('camLon');
+  const camLat = document.getElementById('camLat');
+  const camZoom = document.getElementById('camZoom');
+  const camPitch = document.getElementById('camPitch');
+  const camBearing = document.getElementById('camBearing');
+  const camLonVal = document.getElementById('camLonVal');
+  const camLatVal = document.getElementById('camLatVal');
+  const camZoomVal = document.getElementById('camZoomVal');
+  const camPitchVal = document.getElementById('camPitchVal');
+  const camBearingVal = document.getElementById('camBearingVal');
+
+  camLon.min = cfg.minLon; camLon.max = cfg.maxLon;
+  camLat.min = cfg.minLat; camLat.max = cfg.maxLat;
+  camZoom.min = cfg.minZoom; camZoom.max = cfg.maxZoom;
+
+  let syncingFromMap = false;
+
+  function applyCameraFromSliders(){
+    if (syncingFromMap) return;
+    map.jumpTo({
+      center: [parseFloat(camLon.value), parseFloat(camLat.value)],
+      zoom: parseFloat(camZoom.value),
+      pitch: parseFloat(camPitch.value),
+      bearing: parseFloat(camBearing.value)
+    });
+  }
+
+  function syncSlidersFromMap(){
+    syncingFromMap = true;
+    const c = map.getCenter();
+    camLon.value = c.lng;
+    camLat.value = c.lat;
+    camZoom.value = map.getZoom();
+    camPitch.value = map.getPitch();
+    camBearing.value = map.getBearing();
+    camLonVal.textContent = c.lng.toFixed(3);
+    camLatVal.textContent = c.lat.toFixed(3);
+    camZoomVal.textContent = map.getZoom().toFixed(1);
+    camPitchVal.textContent = Math.round(map.getPitch());
+    camBearingVal.textContent = Math.round(map.getBearing());
+    syncingFromMap = false;
+  }
+
+  [camLon, camLat, camZoom, camPitch, camBearing].forEach(input => {
+    input.addEventListener('input', () => {
+      camLonVal.textContent = parseFloat(camLon.value).toFixed(3);
+      camLatVal.textContent = parseFloat(camLat.value).toFixed(3);
+      camZoomVal.textContent = parseFloat(camZoom.value).toFixed(1);
+      camPitchVal.textContent = Math.round(parseFloat(camPitch.value));
+      camBearingVal.textContent = Math.round(parseFloat(camBearing.value));
+      applyCameraFromSliders();
+    });
+  });
+
+  map.on('move', syncSlidersFromMap);
+  map.on('zoom', syncSlidersFromMap);
+  map.on('pitch', syncSlidersFromMap);
+  map.on('rotate', syncSlidersFromMap);
+  syncSlidersFromMap();
+
+  function flyToCamera(camera){
+    map.flyTo({
+      center: [camera.lon, camera.lat],
+      zoom: camera.zoom,
+      pitch: camera.pitch,
+      bearing: camera.bearing,
+      duration: 1500,
+      essential: true
+    });
+  }
+
+  document.getElementById('camReset').addEventListener('click', () => {
+    goToPreset(getDefaultPreset());
+  });
+
+  // Fond de carte — ortho (photo aérienne), plan IGN, ou relief hypsométrique sombre (mer/terres)
+  const BASEMAP_LAYERS = { ortho: 'osm-layer', plan: 'plan-layer', dark: 'dark-hypso' };
+  let currentBasemap = 'ortho';
+  const adminBasemap = document.getElementById('adminBasemap');
+  const basemapBtns = adminBasemap.querySelectorAll('.admin-basemap-btn');
+
+  function setBasemap(id){
+    if (!BASEMAP_LAYERS[id]) id = 'ortho';
+    currentBasemap = id;
+    Object.entries(BASEMAP_LAYERS).forEach(([key, layerId]) => {
+      map.setLayoutProperty(layerId, 'visibility', key === id ? 'visible' : 'none');
+    });
+    basemapBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.basemap === id));
+  }
+
+  basemapBtns.forEach(btn => {
+    btn.addEventListener('click', () => setBasemap(btn.dataset.basemap));
+  });
+
+  // Le fond de carte, les couches et le niveau de mer du préréglage par défaut
+  // sont appliqués plus bas, une fois toutes les couches chargées (cf. applyDefaultPresetLayers).
+
+  // Axes routiers — matérialisation IGN (surcouche raster)
+  const roadsToggle = document.getElementById('roadsToggle');
+  roadsToggle.addEventListener('click', () => {
+    const visible = roadsToggle.classList.toggle('active');
+    map.setLayoutProperty('roads-layer', 'visibility', visible ? 'visible' : 'none');
+  });
+
+  // Panneau admin — positions préréglées
+  const adminToggle = document.getElementById('adminToggle');
+  const adminPanel = document.getElementById('adminPanel');
+  const adminPresetName = document.getElementById('adminPresetName');
+  const adminAddBtn = document.getElementById('adminAddBtn');
+  const adminList = document.getElementById('adminList');
+  const adminEmpty = document.getElementById('adminEmpty');
+  const adminGroupFilter = document.getElementById('adminGroupFilter');
+  adminGroupFilter.addEventListener('change', renderPresets);
+
+  adminToggle.addEventListener('click', () => {
+    adminPanel.classList.toggle('visible');
+    adminToggle.classList.toggle('active');
+  });
+
+  function currentCamera(){
+    const c = map.getCenter();
+    return { lon: c.lng, lat: c.lat, zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
+  }
+
+  // Applique le fond de carte, les couches et le niveau de submersion d'un préréglage
+  function applyPresetLayers(preset){
+    const { basemap, layers, seaLevel } = normalizePreset(preset);
+
+    setBasemap(basemap);
+
+    roadsToggle.classList.toggle('active', layers.roads);
+    map.setLayoutProperty('roads-layer', 'visibility', layers.roads ? 'visible' : 'none');
+
+    seaLevelPanel.classList.toggle('visible', layers.flood);
+    seaLevelToggle.classList.toggle('active', layers.flood);
+    setFloodVisible(layers.flood);
+
+    communeBoundaryVisible = layers.communeBoundary;
+    communeBoundaryToggle.classList.toggle('active', communeBoundaryVisible);
+    if (map.getLayer('commune-boundary-line')) {
+      map.setLayoutProperty('commune-boundary-line', 'visibility', communeBoundaryVisible ? 'visible' : 'none');
+    }
+
+    slider.value = seaLevel;
+    updateSeaLevel(seaLevel);
+  }
+
+  function goToPreset(preset){
+    flyToCamera(preset.camera);
+    applyPresetLayers(preset);
+  }
+
+  let draggedPresetId = null;
+
+  function renderPresetItem(preset, defaultId, knownGroups){
+    const isDefault = preset.id === defaultId;
+    const item = document.createElement('div');
+    item.className = 'admin-item' + (isDefault ? ' is-default' : '');
+    item.draggable = true;
+    item.dataset.presetId = preset.id;
+
+    item.addEventListener('dragstart', (e) => {
+      draggedPresetId = preset.id;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', preset.id); } catch (err) {}
+    });
+    item.addEventListener('dragend', () => {
+      draggedPresetId = null;
+      item.classList.remove('dragging');
+      adminList.querySelectorAll('.admin-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+    item.addEventListener('dragover', (e) => {
+      if (!draggedPresetId || draggedPresetId === preset.id) return;
+      const dragged = draggedPresetId ? presetById(draggedPresetId) : null;
+      if (!dragged || normalizePreset(dragged).group !== normalizePreset(preset).group) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      if (!draggedPresetId || draggedPresetId === preset.id) return;
+      reorderPreset(draggedPresetId, preset.id);
+    });
+
+    const row = document.createElement('div');
+    row.className = 'admin-item-row';
+
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'admin-item-drag-handle';
+    dragHandle.title = 'Glisser pour réordonner';
+    dragHandle.innerHTML = '<i class="fa-solid fa-grip-vertical"></i>';
+
+    const name = document.createElement('div');
+    name.className = 'admin-item-name';
+    name.textContent = preset.name;
+    name.title = preset.name;
+
+    const goBtn = document.createElement('button');
+    goBtn.className = 'admin-item-icon-btn go';
+    goBtn.title = 'Aller à cette vue';
+    goBtn.innerHTML = '<i class="fa-solid fa-location-arrow"></i>';
+    goBtn.addEventListener('click', () => goToPreset(preset));
+
+    const basemapTag = document.createElement('span');
+    basemapTag.className = 'admin-item-basemap';
+    const basemapLabels = { ortho: 'ORTHO', plan: 'PLAN', dark: 'SOMBRE' };
+    basemapTag.textContent = basemapLabels[normalizePreset(preset).basemap] || 'ORTHO';
+
+    const settingsBtn = document.createElement('button');
+    settingsBtn.className = 'admin-item-icon-btn settings';
+    settingsBtn.title = 'Paramètres de la position';
+    settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
+
+    const settingsPanel = document.createElement('div');
+    settingsPanel.className = 'admin-item-settings';
+
+    const renameRow = document.createElement('div');
+    renameRow.className = 'admin-item-settings-rename';
+    const renameInput = document.createElement('input');
+    renameInput.type = 'text';
+    renameInput.maxLength = 40;
+    renameInput.value = preset.name;
+    renameInput.placeholder = 'Nom de la position…';
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'admin-item-icon-btn';
+    renameBtn.title = 'Renommer';
+    renameBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+    function commitRename(){
+      const newName = renameInput.value.trim();
+      if (!newName || newName === preset.name) return;
+      const data = loadCameraPresets();
+      const p = data.list.find(p => p.id === preset.id);
+      if (p) { p.name = newName; saveCameraPresets(data); renderPresets(); }
+    }
+    renameBtn.addEventListener('click', commitRename);
+    renameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') commitRename();
+    });
+    renameRow.appendChild(renameInput);
+    renameRow.appendChild(renameBtn);
+
+    const groupLabel = document.createElement('div');
+    groupLabel.className = 'admin-item-settings-group-label';
+    groupLabel.textContent = 'Groupe';
+
+    const groupRow = document.createElement('div');
+    groupRow.className = 'admin-item-settings-group';
+
+    const currentGroup = normalizePreset(preset).group;
+    const NEW_GROUP_VALUE = '\0__new__';
+
+    const groupSelect = document.createElement('select');
+    const noneOpt = document.createElement('option');
+    noneOpt.value = '';
+    noneOpt.textContent = 'Sans groupe';
+    groupSelect.appendChild(noneOpt);
+    (knownGroups || []).forEach(g => {
+      const opt = document.createElement('option');
+      opt.value = g;
+      opt.textContent = g;
+      groupSelect.appendChild(opt);
+    });
+    if (currentGroup && !(knownGroups || []).includes(currentGroup)) {
+      const opt = document.createElement('option');
+      opt.value = currentGroup;
+      opt.textContent = currentGroup;
+      groupSelect.appendChild(opt);
+    }
+    const newOpt = document.createElement('option');
+    newOpt.value = NEW_GROUP_VALUE;
+    newOpt.textContent = '+ Nouveau groupe…';
+    groupSelect.appendChild(newOpt);
+    groupSelect.value = currentGroup;
+
+    const newGroupInput = document.createElement('input');
+    newGroupInput.type = 'text';
+    newGroupInput.maxLength = 40;
+    newGroupInput.placeholder = 'Nom du nouveau groupe…';
+    newGroupInput.style.display = 'none';
+
+    function applyGroup(newGroup){
+      const data = loadCameraPresets();
+      const p = data.list.find(p => p.id === preset.id);
+      if (p && normalizePreset(p).group !== newGroup) {
+        p.group = newGroup;
+        saveCameraPresets(data);
+        renderPresets();
+      }
+    }
+
+    groupSelect.addEventListener('change', () => {
+      if (groupSelect.value === NEW_GROUP_VALUE) {
+        newGroupInput.style.display = '';
+        newGroupInput.value = '';
+        newGroupInput.focus();
+        return;
+      }
+      applyGroup(groupSelect.value);
+    });
+    newGroupInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const name = newGroupInput.value.trim();
+        if (name) applyGroup(name);
+      }
+    });
+    newGroupInput.addEventListener('blur', () => {
+      setTimeout(() => {
+        const name = newGroupInput.value.trim();
+        if (name) applyGroup(name);
+      }, 0);
+    });
+
+    groupRow.appendChild(groupSelect);
+    groupRow.appendChild(newGroupInput);
+
+    const updateBtn = document.createElement('button');
+    updateBtn.className = 'admin-item-settings-btn update';
+    updateBtn.innerHTML = '<i class="fa-solid fa-rotate"></i>Mettre à jour avec la vue actuelle';
+    updateBtn.addEventListener('click', () => {
+      const data = loadCameraPresets();
+      const p = data.list.find(p => p.id === preset.id);
+      if (!p) return;
+      p.camera = currentCamera();
+      p.basemap = currentBasemap;
+      p.layers = { roads: roadsToggle.classList.contains('active'), flood: floodVisible, communeBoundary: communeBoundaryVisible };
+      p.seaLevel = parseFloat(slider.value);
+      saveCameraPresets(data);
+      renderPresets();
+    });
+
+    const starBtn = document.createElement('button');
+    starBtn.className = 'admin-item-settings-btn star' + (isDefault ? ' is-default' : '');
+    starBtn.innerHTML = '<i class="fa-' + (isDefault ? 'solid' : 'regular') + ' fa-star"></i>' + (isDefault ? 'Retirer la vue par défaut' : 'Définir comme vue par défaut');
+    starBtn.addEventListener('click', () => {
+      const data = loadCameraPresets();
+      data.defaultId = isDefault ? null : preset.id;
+      saveCameraPresets(data);
+      renderPresets();
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'admin-item-settings-btn del';
+    delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>Supprimer';
+    delBtn.addEventListener('click', () => {
+      const data = loadCameraPresets();
+      data.list = data.list.filter(p => p.id !== preset.id);
+      if (data.defaultId === preset.id) data.defaultId = null;
+      saveCameraPresets(data);
+      renderPresets();
+    });
+
+    settingsPanel.appendChild(renameRow);
+    settingsPanel.appendChild(groupLabel);
+    settingsPanel.appendChild(groupRow);
+    settingsPanel.appendChild(updateBtn);
+    settingsPanel.appendChild(starBtn);
+    settingsPanel.appendChild(delBtn);
+
+    settingsBtn.addEventListener('click', () => {
+      const willOpen = !settingsPanel.classList.contains('visible');
+      adminList.querySelectorAll('.admin-item-settings.visible').forEach(p => p.classList.remove('visible'));
+      adminList.querySelectorAll('.admin-item-icon-btn.settings.active').forEach(b => b.classList.remove('active'));
+      settingsPanel.classList.toggle('visible', willOpen);
+      settingsBtn.classList.toggle('active', willOpen);
+    });
+
+    row.appendChild(dragHandle);
+    row.appendChild(basemapTag);
+    row.appendChild(name);
+    row.appendChild(goBtn);
+    row.appendChild(settingsBtn);
+    item.appendChild(row);
+    item.appendChild(settingsPanel);
+    return item;
+  }
+
+  function presetById(id){
+    return loadCameraPresets().list.find(p => p.id === id) || null;
+  }
+
+  // Réordonne draggedId juste avant/après targetId, dans le même groupe uniquement
+  function reorderPreset(draggedId, targetId){
+    const data = loadCameraPresets();
+    const fromIdx = data.list.findIndex(p => p.id === draggedId);
+    const toIdx = data.list.findIndex(p => p.id === targetId);
+    if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return;
+    const [moved] = data.list.splice(fromIdx, 1);
+    const newToIdx = data.list.findIndex(p => p.id === targetId);
+    data.list.splice(newToIdx, 0, moved);
+    saveCameraPresets(data);
+    renderPresets();
+  }
+
+  function renderPresets(){
+    const { list, defaultId } = loadCameraPresets();
+    adminList.innerHTML = '';
+    adminEmpty.style.display = list.length ? 'none' : 'block';
+
+    const groups = [];
+    const groupIndex = {};
+    list.forEach(preset => {
+      const groupName = normalizePreset(preset).group;
+      const key = groupName || '\0ungrouped';
+      if (!(key in groupIndex)) {
+        groupIndex[key] = { name: groupName, items: [] };
+        groups.push(groupIndex[key]);
+      }
+      groupIndex[key].items.push(preset);
+    });
+    // Le groupe "sans groupe" (nom vide) toujours affiché en dernier
+    groups.sort((a, b) => (a.name ? 0 : 1) - (b.name ? 0 : 1));
+
+    // Repeuple le select de filtre en conservant la sélection courante si elle existe toujours
+    const namedGroups = groups.filter(g => g.name).map(g => g.name);
+    const previousFilter = adminGroupFilter.value;
+    adminGroupFilter.innerHTML = '<option value="">Tous les groupes</option>';
+    namedGroups.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      adminGroupFilter.appendChild(opt);
+    });
+    adminGroupFilter.value = namedGroups.includes(previousFilter) ? previousFilter : '';
+    adminGroupFilter.style.display = namedGroups.length ? '' : 'none';
+
+    const activeFilter = adminGroupFilter.value;
+    const visibleGroups = activeFilter ? groups.filter(g => g.name === activeFilter) : groups;
+
+    visibleGroups.forEach(group => {
+      const groupEl = document.createElement('div');
+      groupEl.className = 'admin-group';
+
+      // L'en-tête de groupe est redondant quand un seul groupe est affiché via le filtre
+      if (group.name && !activeFilter) {
+        const label = document.createElement('div');
+        label.className = 'admin-group-label';
+        label.textContent = group.name;
+        groupEl.appendChild(label);
+      }
+
+      group.items.forEach(preset => {
+        groupEl.appendChild(renderPresetItem(preset, defaultId, namedGroups));
+      });
+
+      adminList.appendChild(groupEl);
+    });
+  }
+
+  function addPreset(){
+    const name = adminPresetName.value.trim();
+    if (!name) { adminPresetName.focus(); return; }
+    const data = loadCameraPresets();
+    data.list.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      name,
+      camera: currentCamera(),
+      basemap: currentBasemap,
+      layers: { roads: roadsToggle.classList.contains('active'), flood: floodVisible, communeBoundary: communeBoundaryVisible },
+      seaLevel: parseFloat(slider.value),
+      group: adminGroupFilter.value
+    });
+    saveCameraPresets(data);
+    adminPresetName.value = '';
+    renderPresets();
+  }
+
+  adminAddBtn.addEventListener('click', addPreset);
+  adminPresetName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addPreset();
+  });
+
+  renderPresets();
+
+  // Export / import de la configuration complète
+  const adminExportBtn = document.getElementById('adminExportBtn');
+  const adminImportBtn = document.getElementById('adminImportBtn');
+  const adminImportFile = document.getElementById('adminImportFile');
+  const adminIoMsg = document.getElementById('adminIoMsg');
+
+  function showIoMsg(text, ok){
+    adminIoMsg.textContent = text;
+    adminIoMsg.className = 'admin-io-msg visible ' + (ok ? 'ok' : 'error');
+    setTimeout(() => adminIoMsg.classList.remove('visible'), 3500);
+  }
+
+  adminExportBtn.addEventListener('click', () => {
+    downloadConfigBundle();
+    showIoMsg('Configuration exportée.', true);
+  });
+
+  adminImportBtn.addEventListener('click', () => adminImportFile.click());
+
+  adminImportFile.addEventListener('change', async () => {
+    const file = adminImportFile.files[0];
+    adminImportFile.value = '';
+    if (!file) return;
+    try {
+      const { mapConfig } = await readAndImportConfigFile(file);
+      renderPresets();
+      camLon.min = mapConfig.minLon; camLon.max = mapConfig.maxLon;
+      camLat.min = mapConfig.minLat; camLat.max = mapConfig.maxLat;
+      camZoom.min = mapConfig.minZoom; camZoom.max = mapConfig.maxZoom;
+      map.setMinZoom(mapConfig.minZoom);
+      map.setMaxZoom(mapConfig.maxZoom);
+      map.setMaxBounds([[mapConfig.minLon, mapConfig.minLat], [mapConfig.maxLon, mapConfig.maxLat]]);
+      showIoMsg('Configuration importée.', true);
+    } catch (e) {
+      showIoMsg(e.message || "Échec de l'import.", false);
+    }
+  });
+
+  // Points d'intérêt (Deshaies) — marqueurs filtrables par catégorie
+  const POI_ICONS = {
+    'parking': 'fa-square-parking',
+    'building': 'fa-building',
+    'theater': 'fa-masks-theater',
+    'movie': 'fa-clapperboard',
+    'star': 'fa-star',
+    'ball': 'fa-futbol',
+    'umbrella-beach': 'fa-umbrella-beach',
+    'health': 'fa-briefcase-medical',
+    'shield': 'fa-shield-halved',
+    'briefcase': 'fa-briefcase',
+    'landmark': 'fa-landmark'
+  };
+
+  const poiToggle = document.getElementById('poiToggle');
+  const poiPanel = document.getElementById('poiPanel');
+  const poiList = document.getElementById('poiList');
+
+  poiToggle.addEventListener('click', () => {
+    poiPanel.classList.toggle('visible');
+    poiToggle.classList.toggle('active');
+    poiPanel.dispatchEvent(new Event('poi-panel-toggle'));
+  });
+
+  // Limite communale — contour officiel IGN Admin Express COG (data.gouv.fr / gregoiredavid/france-geojson)
+  let communesGeoJson = null;
+  function setCommuneBoundary(code){
+    if (!map.getSource('commune-boundary')) {
+      map.once('load', () => setCommuneBoundary(code));
+      return;
+    }
+    const feature = code && communesGeoJson
+      ? communesGeoJson.features.find(f => f.properties.code === code)
+      : null;
+    map.getSource('commune-boundary').setData({
+      type: 'FeatureCollection',
+      features: feature ? [feature] : []
+    });
+  }
+  fetch('communes-guadeloupe.geojson')
+    .then(r => r.json())
+    .then(data => {
+      communesGeoJson = data;
+      setCommuneBoundary(loadMapConfig().communeBoundary);
+    })
+    .catch(err => console.error('Erreur de chargement des limites communales :', err));
+
+  const communeBoundaryToggle = document.getElementById('communeBoundaryToggle');
+  let communeBoundaryVisible = true;
+  communeBoundaryToggle.classList.add('active');
+  communeBoundaryToggle.addEventListener('click', () => {
+    communeBoundaryVisible = !communeBoundaryVisible;
+    communeBoundaryToggle.classList.toggle('active', communeBoundaryVisible);
+    if (map.getLayer('commune-boundary-line')) {
+      map.setLayoutProperty('commune-boundary-line', 'visibility', communeBoundaryVisible ? 'visible' : 'none');
+    }
+  });
+
+  fetch('poi-data.json')
+    .then(r => r.json())
+    .then(data => {
+      const categoriesById = {};
+      const features = [];
+
+      data.categories.forEach(cat => {
+        categoriesById[cat.id] = cat;
+        cat.places.forEach((place, placeIdx) => {
+          features.push({
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [place.lng, place.lat] },
+            properties: {
+              name: place.name,
+              description: place.description || '',
+              catId: cat.id,
+              placeIdx,
+              catLabel: cat.label,
+              color: cat.color,
+              icon: POI_ICONS[cat.icon] || 'fa-location-dot'
+            }
+          });
+        });
+      });
+
+      // Filtres par catégorie, dépliables en liste de lieux
+      poiList.innerHTML = '';
+      const placeCheckboxes = [];
+      data.categories.forEach(cat => {
+        const group = document.createElement('div');
+        group.className = 'poi-cat-group';
+
+        const label = document.createElement('div');
+        label.className = 'poi-cat';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.dataset.catId = cat.id;
+
+        const chevron = document.createElement('button');
+        chevron.type = 'button';
+        chevron.className = 'poi-cat-chevron';
+        chevron.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+
+        const swatch = document.createElement('span');
+        swatch.className = 'poi-cat-swatch';
+        swatch.style.background = cat.color;
+        swatch.innerHTML = '<i class="fa-solid ' + (POI_ICONS[cat.icon] || 'fa-location-dot') + '"></i>';
+
+        const text = document.createElement('span');
+        text.className = 'poi-cat-label';
+        text.textContent = cat.label + ' ';
+        const count = document.createElement('span');
+        count.className = 'poi-cat-count';
+        count.textContent = cat.places.length;
+        text.appendChild(count);
+
+        label.appendChild(chevron);
+        label.appendChild(checkbox);
+        label.appendChild(swatch);
+        label.appendChild(text);
+        group.appendChild(label);
+
+        const sublist = document.createElement('div');
+        sublist.className = 'poi-place-list';
+
+        cat.places.forEach((place, placeIdx) => {
+          const placeRow = document.createElement('div');
+          placeRow.className = 'poi-place';
+
+          const placeCheckbox = document.createElement('input');
+          placeCheckbox.type = 'checkbox';
+          placeCheckbox.checked = true;
+          placeCheckbox.dataset.catId = cat.id;
+          placeCheckbox.dataset.placeIdx = placeIdx;
+          placeCheckboxes.push(placeCheckbox);
+
+          const placeText = document.createElement('span');
+          placeText.className = 'poi-place-label';
+          placeText.textContent = place.name;
+
+          const placeGoBtn = document.createElement('button');
+          placeGoBtn.type = 'button';
+          placeGoBtn.className = 'poi-cat-go';
+          placeGoBtn.title = 'Aller à ' + place.name;
+          placeGoBtn.innerHTML = '<i class="fa-solid fa-location-arrow"></i>';
+          placeGoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            placeCheckbox.checked = true;
+            updatePoiMarkers();
+            map.flyTo({ center: [place.lng, place.lat], zoom: 18, duration: 1500, essential: true });
+          });
+
+          placeCheckbox.addEventListener('change', () => {
+            syncCategoryCheckbox(cat.id);
+            updatePoiMarkers();
+          });
+
+          placeRow.appendChild(placeCheckbox);
+          placeRow.appendChild(placeText);
+          placeRow.appendChild(placeGoBtn);
+          sublist.appendChild(placeRow);
+        });
+
+        group.appendChild(sublist);
+        poiList.appendChild(group);
+
+        function toggleGroup(){
+          group.classList.toggle('expanded');
+        }
+        chevron.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); toggleGroup(); });
+        text.addEventListener('click', (e) => { e.preventDefault(); toggleGroup(); });
+
+        checkbox.addEventListener('change', () => {
+          placeCheckboxes.forEach(cb => { if (cb.dataset.catId === cat.id) cb.checked = checkbox.checked; });
+          updatePoiMarkers();
+        });
+      });
+
+      function syncCategoryCheckbox(catId){
+        const catCheckbox = poiList.querySelector('input[type="checkbox"][data-cat-id="' + catId + '"]:not([data-place-idx])');
+        const placesForCat = placeCheckboxes.filter(cb => cb.dataset.catId === catId);
+        const allChecked = placesForCat.every(cb => cb.checked);
+        const noneChecked = placesForCat.every(cb => !cb.checked);
+        if (catCheckbox) {
+          catCheckbox.checked = allChecked;
+          catCheckbox.indeterminate = !allChecked && !noneChecked;
+        }
+      }
+
+      let poiMarkers = [];
+
+      function updatePoiMarkers(){
+        poiMarkers.forEach(m => m.remove());
+        poiMarkers = [];
+
+        if (!poiPanel.classList.contains('visible')) return;
+
+        const activePlaces = new Set(
+          placeCheckboxes.filter(cb => cb.checked).map(cb => cb.dataset.catId + '::' + cb.dataset.placeIdx)
+        );
+
+        features.forEach(f => {
+          if (!activePlaces.has(f.properties.catId + '::' + f.properties.placeIdx)) return;
+
+          const anchor = document.createElement('div');
+          anchor.className = 'poi-marker-anchor';
+
+          const el = document.createElement('div');
+          el.className = 'poi-marker';
+          el.style.background = f.properties.color;
+          el.innerHTML = '<i class="fa-solid ' + f.properties.icon + '"></i>';
+          anchor.appendChild(el);
+
+          const popupHtml =
+            '<div class="poi-popup-cat">' + f.properties.catLabel + '</div>' +
+            '<div class="poi-popup-name">' + f.properties.name + '</div>' +
+            (f.properties.description ? '<div class="poi-popup-desc">' + f.properties.description + '</div>' : '');
+
+          const popup = new maplibregl.Popup({ offset: 20, maxWidth: '260px' }).setHTML(popupHtml);
+
+          const marker = new maplibregl.Marker({ element: anchor })
+            .setLngLat(f.geometry.coordinates)
+            .setPopup(popup)
+            .addTo(map);
+
+          el.addEventListener('click', () => {
+            map.flyTo({ center: f.geometry.coordinates, duration: 1000, essential: true });
+          });
+
+          poiMarkers.push(marker);
+        });
+      }
+
+      if (map.loaded()) {
+        updatePoiMarkers();
+      } else {
+        map.on('load', updatePoiMarkers);
+      }
+
+      poiPanel.addEventListener('poi-panel-toggle', updatePoiMarkers);
+
+      document.getElementById('poiAllBtn').addEventListener('click', () => {
+        poiList.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = true; cb.indeterminate = false; });
+        updatePoiMarkers();
+      });
+      document.getElementById('poiNoneBtn').addEventListener('click', () => {
+        poiList.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; cb.indeterminate = false; });
+        updatePoiMarkers();
+      });
+    })
+    .catch(err => console.error('Erreur de chargement des points d\'intérêt :', err));
+
+  // Le plan d'eau n'est affiché sur la carte que lorsque le panneau "Niveau de la mer" est ouvert
+  const seaLevelToggle = document.getElementById('seaLevelToggle');
+  const seaLevelPanel = document.getElementById('seaLevelPanel');
+  let floodVisible = false;
+  function setFloodVisible(visible){
+    floodVisible = visible;
+    if (map.getLayer('flood-fill')) {
+      map.setLayoutProperty('flood-fill', 'visibility', floodVisible ? 'visible' : 'none');
+    }
+  }
+  seaLevelToggle.addEventListener('click', () => {
+    const willOpen = !seaLevelPanel.classList.contains('visible');
+    seaLevelPanel.classList.toggle('visible', willOpen);
+    seaLevelToggle.classList.toggle('active', willOpen);
+    setFloodVisible(willOpen);
+  });
+
+  // Applique le fond de carte / couches / niveau de mer du préréglage par défaut au démarrage
+  function applyDefaultPresetLayers(){
+    applyPresetLayers(getDefaultPreset());
+  }
+  if (map.isStyleLoaded()) {
+    applyDefaultPresetLayers();
+  } else {
+    map.once('load', applyDefaultPresetLayers);
+  }
+
+  // Couche radar nuages/pluie temps réel (OpenWeatherMap — nécessite une clé API dans les paramètres)
+  (function(){
+    const radarToggle = document.getElementById('radarToggle');
+    const apiKey = cfg.weatherApiKey;
+    let radarOn = false;
+
+    if (!apiKey) {
+      radarToggle.title = 'Nuages / pluie — clé API OpenWeatherMap requise (voir Paramètres)';
+      radarToggle.classList.add('disabled');
+    }
+
+    function setRadarVisible(visible){
+      radarOn = visible;
+      if (map.getLayer('weather-radar-layer')) {
+        map.setLayoutProperty('weather-radar-layer', 'visibility', radarOn ? 'visible' : 'none');
+      }
+    }
+
+    radarToggle.addEventListener('click', () => {
+      if (!apiKey) {
+        alert("Renseignez une clé API OpenWeatherMap dans les Paramètres pour activer cette couche.");
+        return;
+      }
+      radarToggle.classList.toggle('active', !radarOn);
+      setRadarVisible(!radarOn);
+    });
+  })();
+
+  // Cyclones actifs (National Hurricane Center) : cône d'incertitude, trace de
+  // prévision/passée, points, via proxy serveur (/nhc-cyclones) vers le service ArcGIS
+  // NHC (5 créneaux de tempête par bassin, vides hors saison/activité). Bassin Atlantique
+  // par défaut (pertinent pour la Guadeloupe) ; bascule Pacifique Est disponible dans le
+  // panneau pour vérifier le bon fonctionnement même quand l'Atlantique est calme.
+  (function(){
+    const cycloneToggle = document.getElementById('cycloneToggle');
+    const cyclonePanel = document.getElementById('cyclonePanel');
+    const cycloneBody = document.getElementById('cycloneBody');
+    const cycloneUpdated = document.getElementById('cycloneUpdated');
+    const cycloneBasinSwitch = document.getElementById('cycloneBasinSwitch');
+    const basinBtns = cycloneBasinSwitch.querySelectorAll('.cyclone-basin-btn');
+
+    const REFRESH_MS = 5 * 60 * 1000;
+    const CYCLONE_LAYERS = ['cyclone-cone-fill', 'cyclone-cone-line', 'cyclone-past-track-line', 'cyclone-track-line', 'cyclone-points-circle', 'cyclone-points-label'];
+
+    // Slots de couches ArcGIS par tempête et par bassin (décalage de 26 par créneau,
+    // 5 créneaux) — doit rester synchronisé avec NHC_BASIN_BASE côté server.js.
+    const BASIN_BASE = { AT: 6, EP: 136 };
+    const BASIN_LABEL = { AT: 'Atlantique', EP: 'Pacifique Est' };
+    // Vue par défaut (à plat, sans relief) par bassin, quand aucun système n'est actif.
+    const BASIN_OVERVIEW_CAMERA = {
+      AT: { lon: -40.5, lat: 16.45, zoom: 4.9, pitch: 0, bearing: 0 },
+      EP: { lon: -110, lat: 16.45, zoom: 4.4, pitch: 0, bearing: 0 }
+    };
+
+    function stormSlots(basin){
+      const base = BASIN_BASE[basin] || BASIN_BASE.AT;
+      return [0, 26, 52, 78, 104].map((offset) => ({
+        points: base + offset, track: base + 1 + offset, cone: base + 2 + offset,
+        pastPoints: base + 5 + offset, pastTrack: base + 6 + offset
+      }));
+    }
+
+    let currentBasin = BASIN_BASE[cfg.cycloneBasin] ? cfg.cycloneBasin : 'AT';
+    let cyclonesOn = false;
+    // Verrou d'emprise/zoom d'origine (carte limitée à la Guadeloupe) — desserré
+    // pendant l'affichage des cyclones pour pouvoir voir toute la zone du bassin suivi.
+    const originalMaxBounds = map.getMaxBounds();
+    const originalMinZoom = map.getMinZoom();
+    let basemapBeforeCyclones = null;
+
+    function updateBasinButtons(){
+      basinBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.basin === currentBasin));
+    }
+    updateBasinButtons();
+
+    const SS_LABEL = { '-1': 'Dépression', '0': 'Tempête tropicale', '1': 'Catégorie 1', '2': 'Catégorie 2', '3': 'Catégorie 3', '4': 'Catégorie 4', '5': 'Catégorie 5' };
+
+    // Étend une bbox [minLon, minLat, maxLon, maxLat] avec les coordonnées d'une géométrie GeoJSON
+    function extendBbox(bbox, geometry){
+      if (!geometry) return;
+      const coordsFlat = JSON.stringify(geometry.coordinates).match(/-?\d+\.?\d*/g);
+      if (!coordsFlat) return;
+      for (let i = 0; i < coordsFlat.length - 1; i += 2) {
+        const lon = parseFloat(coordsFlat[i]);
+        const lat = parseFloat(coordsFlat[i + 1]);
+        if (Number.isNaN(lon) || Number.isNaN(lat)) continue;
+        if (lon < bbox[0]) bbox[0] = lon;
+        if (lat < bbox[1]) bbox[1] = lat;
+        if (lon > bbox[2]) bbox[2] = lon;
+        if (lat > bbox[3]) bbox[3] = lat;
+      }
+    }
+
+    // Ajuste automatiquement la vue caméra pour englober la Guadeloupe et l'ensemble
+    // des systèmes actifs (cône, traces, points) — vue "large" tant qu'un cyclone est suivi.
+    // Sans système actif, vue par défaut du bassin choisi (BASIN_OVERVIEW_CAMERA).
+    function flyToStormExtent(features){
+      if (!features.length) {
+        flyToCamera(BASIN_OVERVIEW_CAMERA[currentBasin]);
+        return;
+      }
+      const bbox = [cfg.minLon, cfg.minLat, cfg.maxLon, cfg.maxLat];
+      features.forEach((f) => extendBbox(bbox, f.geometry));
+      map.fitBounds([[bbox[0], bbox[1]], [bbox[2], bbox[3]]], {
+        padding: { top: 90, bottom: 90, left: 90, right: 90 },
+        pitch: 0,
+        bearing: 0,
+        duration: 1800,
+        maxZoom: originalMinZoom + 4,
+        essential: true
+      });
+    }
+
+    function catLabel(props){
+      if (typeof props.ssnum === 'number' && props.ssnum >= 1) return SS_LABEL[String(props.ssnum)] || `Catégorie ${props.ssnum}`;
+      return props.stormtype || SS_LABEL[String(props.ssnum)] || '—';
+    }
+
+    function setLayersVisible(visible){
+      CYCLONE_LAYERS.forEach((id) => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+      });
+    }
+
+    function setSourceData(id, fc){
+      if (map.getSource(id)) map.getSource(id).setData(fc);
+    }
+
+    function renderPanel(storms){
+      if (!storms.length) {
+        cycloneBody.innerHTML = `<div class="cyclone-empty">Aucun système actif dans le bassin ${BASIN_LABEL[currentBasin]} en ce moment.</div>`;
+        return;
+      }
+      cycloneBody.innerHTML = storms.map((s) => `
+        <div class="cyclone-storm">
+          <div class="cyclone-storm-name">
+            <i class="fa-solid fa-hurricane"></i>${s.stormname || 'Système inconnu'}
+            <span class="cyclone-cat">${catLabel(s)}</span>
+          </div>
+          <div class="cyclone-storm-meta">
+            <div>Vent max : <b>${s.maxwind != null ? Math.round(s.maxwind) + ' kt' : '—'}</b></div>
+            <div>Rafales : <b>${s.gust != null ? Math.round(s.gust) + ' kt' : '—'}</b></div>
+            <div>Pression : <b>${s.mslp != null ? Math.round(s.mslp) + ' hPa' : '—'}</b></div>
+            <div>Déplacement : <b>${s.tcspd != null ? Math.round(s.tcspd) + ' kt' : '—'}</b></div>
+          </div>
+          <div class="cyclone-storm-adv">Avis n°${s.advisnum || '—'} — ${s.fldatelbl || s.advdate || ''}</div>
+        </div>`).join('') + `<div class="weather-source">Données <a href="https://www.nhc.noaa.gov/" target="_blank" rel="noopener">NHC / NOAA</a></div>`;
+    }
+
+    async function refreshCyclones(){
+      try {
+        const res = await fetch(`/nhc-cyclones?basin=${currentBasin}`);
+        if (!res.ok) throw new Error('nhc proxy error');
+        const byLayer = await res.json();
+
+        const coneFeatures = [], trackFeatures = [], pastTrackFeatures = [], pointFeatures = [];
+        const activeStorms = [];
+        const extentFeatures = [];
+
+        stormSlots(currentBasin).forEach((slot) => {
+          const cone = byLayer[slot.cone];
+          const track = byLayer[slot.track];
+          const pastTrack = byLayer[slot.pastTrack];
+          const points = byLayer[slot.points];
+
+          if (cone && cone.features && cone.features.length) { coneFeatures.push(...cone.features); extentFeatures.push(...cone.features); }
+          if (track && track.features && track.features.length) { trackFeatures.push(...track.features); extentFeatures.push(...track.features); }
+          if (pastTrack && pastTrack.features && pastTrack.features.length) pastTrackFeatures.push(...pastTrack.features);
+          if (points && points.features && points.features.length) {
+            pointFeatures.push(...points.features);
+            // Point de prévision à tau=0 (position actuelle) pour le résumé du panneau
+            const current = points.features.find((f) => f.properties.tau === 0) || points.features[0];
+            if (current) activeStorms.push(current.properties);
+          }
+        });
+
+        setSourceData('cyclone-cone', { type: 'FeatureCollection', features: coneFeatures });
+        setSourceData('cyclone-track', { type: 'FeatureCollection', features: trackFeatures });
+        setSourceData('cyclone-past-track', { type: 'FeatureCollection', features: pastTrackFeatures });
+        setSourceData('cyclone-points', { type: 'FeatureCollection', features: pointFeatures });
+
+        renderPanel(activeStorms);
+        cycloneToggle.classList.toggle('has-activity', activeStorms.length > 0);
+
+        if (cyclonesOn) flyToStormExtent(extentFeatures);
+
+        const now = new Date();
+        cycloneUpdated.textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      } catch (err) {
+        console.error('Erreur de chargement cyclones :', err);
+        cycloneBody.innerHTML = `<div class="weather-error">Données cyclones indisponibles pour le moment.</div>`;
+      }
+    }
+
+    function init(){
+      if (cyclonesOn) setLayersVisible(true);
+      refreshCyclones();
+    }
+    if (map.isStyleLoaded()) init(); else map.once('load', init);
+
+    cycloneToggle.addEventListener('click', () => {
+      cyclonesOn = !cyclonesOn;
+      cyclonePanel.classList.toggle('visible', cyclonesOn);
+      cycloneToggle.classList.toggle('active', cyclonesOn);
+      setLayersVisible(cyclonesOn);
+
+      if (cyclonesOn) {
+        // Desserre l'emprise/zoom verrouillés sur la Guadeloupe pour pouvoir voir
+        // toute la zone du bassin cyclonique suivi.
+        map.setMaxBounds(null);
+        map.setMinZoom(1);
+        // Plan IGN plus lisible qu'une photo aérienne à l'échelle d'un bassin océanique.
+        basemapBeforeCyclones = currentBasemap;
+        setBasemap('plan');
+        refreshCyclones();
+      } else {
+        map.setMaxBounds(originalMaxBounds);
+        map.setMinZoom(originalMinZoom);
+        if (basemapBeforeCyclones) setBasemap(basemapBeforeCyclones);
+        flyToCamera(getDefaultView());
+      }
+    });
+
+    setInterval(() => {
+      if (cyclonesOn) refreshCyclones();
+    }, REFRESH_MS);
+
+    basinBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const basin = btn.dataset.basin;
+        if (basin === currentBasin) return;
+        currentBasin = basin;
+        updateBasinButtons();
+        cfg.cycloneBasin = basin;
+        saveMapConfig(cfg);
+        cycloneUpdated.textContent = '—';
+        cycloneBody.innerHTML = `<div class="weather-loading">Chargement…</div>`;
+        if (cyclonesOn) refreshCyclones();
+      });
+    });
+  })();
+})();
+
+// Panneau météo — vent, température, précipitations, houle (Open-Meteo, sans clé API)
+(function(){
+  const weatherToggle = document.getElementById('weatherToggle');
+  const weatherPanel = document.getElementById('weatherPanel');
+  const weatherBody = document.getElementById('weatherBody');
+  const weatherUpdated = document.getElementById('weatherUpdated');
+
+  const view = getDefaultView();
+  const LAT = view.lat, LON = view.lon;
+  const REFRESH_MS = 10 * 60 * 1000;
+
+  const WMO_ICON = {
+    0:'fa-sun', 1:'fa-cloud-sun', 2:'fa-cloud-sun', 3:'fa-cloud',
+    45:'fa-smog', 48:'fa-smog',
+    51:'fa-cloud-rain', 53:'fa-cloud-rain', 55:'fa-cloud-rain',
+    61:'fa-cloud-rain', 63:'fa-cloud-rain', 65:'fa-cloud-showers-heavy',
+    80:'fa-cloud-rain', 81:'fa-cloud-showers-heavy', 82:'fa-cloud-showers-heavy',
+    95:'fa-bolt', 96:'fa-bolt', 99:'fa-bolt'
+  };
+
+  function windIconStyle(fromDeg){
+    // wind_direction_10m = direction d'où vient le vent ; +180° pour orienter
+    // la flèche vers où il souffle (plus intuitif à lire sur la carte)
+    return `transform:rotate(${(fromDeg + 180) % 360}deg)`;
+  }
+
+  function render(data){
+    const c = data.current;
+    const marine = data.marineCurrent;
+    const iconClass = WMO_ICON[c.weather_code] || 'fa-cloud';
+
+    const items = [
+      {
+        icon: `<i class="fa-solid fa-location-arrow wind-arrow" style="${windIconStyle(c.wind_direction_10m)}"></i>`,
+        value: `${Math.round(c.wind_speed_10m)}<sup>km/h</sup>`,
+        label: `Vent — rafales ${Math.round(c.wind_gusts_10m)} km/h`
+      },
+      {
+        icon: `<i class="fa-solid ${iconClass}"></i>`,
+        value: `${Math.round(c.temperature_2m)}<sup>°C</sup>`,
+        label: 'Température'
+      },
+      {
+        icon: `<i class="fa-solid fa-droplet"></i>`,
+        value: `${c.precipitation.toFixed(1)}<sup>mm</sup>`,
+        label: 'Précipitations (1h)'
+      }
+    ];
+
+    if (marine && typeof marine.wave_height === 'number') {
+      items.push({
+        icon: `<i class="fa-solid fa-water"></i>`,
+        value: `${marine.wave_height.toFixed(1)}<sup>m</sup>`,
+        label: 'Houle'
+      });
+    }
+
+    weatherBody.innerHTML = `<div class="weather-grid">${items.map(it => `
+      <div class="weather-item">
+        <div class="weather-item-icon">${it.icon}</div>
+        <div class="weather-item-text">
+          <div class="weather-item-value">${it.value}</div>
+          <div class="weather-item-label">${it.label}</div>
+        </div>
+      </div>`).join('')}</div>
+      <div class="weather-source">Données <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a></div>`;
+
+    const now = new Date();
+    weatherUpdated.textContent = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  function renderError(){
+    weatherBody.innerHTML = `<div class="weather-error">Météo indisponible pour le moment.</div>`;
+  }
+
+  async function fetchWeather(){
+    try {
+      const forecastUrl = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code&timezone=auto`;
+      const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height&timezone=auto`;
+
+      const [forecastRes, marineRes] = await Promise.all([
+        fetch(forecastUrl),
+        fetch(marineUrl).catch(() => null)
+      ]);
+
+      if (!forecastRes.ok) throw new Error('forecast api error');
+      const forecastData = await forecastRes.json();
+      let marineCurrent = null;
+      if (marineRes && marineRes.ok) {
+        const marineData = await marineRes.json();
+        marineCurrent = marineData.current || null;
+      }
+
+      render({ current: forecastData.current, marineCurrent });
+    } catch (err) {
+      console.error('Erreur de chargement météo :', err);
+      renderError();
+    }
+  }
+
+  weatherToggle.addEventListener('click', () => {
+    const willOpen = !weatherPanel.classList.contains('visible');
+    weatherPanel.classList.toggle('visible', willOpen);
+    weatherToggle.classList.toggle('active', willOpen);
+    if (willOpen) fetchWeather();
+  });
+
+  setInterval(() => {
+    if (weatherPanel.classList.contains('visible')) fetchWeather();
+  }, REFRESH_MS);
+})();
+
+// Agents terrain (temps réel) — position live des agents en mission + repères
+// photo d'événement, reçus via WebSocket depuis agent.html (PWA mobile).
+(function(){
+  const map = window.__submersionMap;
+  const agentsToggle = document.getElementById('agentsToggle');
+  const agentsPanel = document.getElementById('agentsPanel');
+  const agentsBody = document.getElementById('agentsBody');
+  const agentsUpdated = document.getElementById('agentsUpdated');
+
+  agentsToggle.addEventListener('click', () => {
+    const willOpen = !agentsPanel.classList.contains('visible');
+    agentsPanel.classList.toggle('visible', willOpen);
+    agentsToggle.classList.toggle('active', willOpen);
+  });
+
+  const agentsState = new Map(); // agentName -> { lat, lng, accuracy, timestamp }
+  const agentMarkers = new Map(); // agentName -> maplibregl.Marker
+  const eventMarkers = new Map(); // id -> maplibregl.Marker
+
+  function timeAgoLabel(timestamp){
+    const secs = Math.round((Date.now() - timestamp) / 1000);
+    if (secs < 60) return 'à l\'instant';
+    if (secs < 3600) return `il y a ${Math.round(secs / 60)} min`;
+    return `il y a ${Math.round(secs / 3600)} h`;
+  }
+
+  function renderAgentsList(){
+    const entries = Array.from(agentsState.values()).sort((a, b) => b.timestamp - a.timestamp);
+    if (entries.length === 0) {
+      agentsBody.innerHTML = '<div class="weather-loading">Aucun agent connecté</div>';
+      agentsUpdated.textContent = '—';
+      return;
+    }
+    agentsUpdated.textContent = entries.length + (entries.length > 1 ? ' agents' : ' agent');
+    agentsBody.innerHTML = '';
+    entries.forEach((a) => {
+      const row = document.createElement('div');
+      row.className = 'agent-row';
+      row.innerHTML =
+        '<span class="agent-row-dot"></span>' +
+        '<div class="agent-row-text">' +
+          '<div class="agent-row-name">' + a.agentName + '</div>' +
+          '<div class="agent-row-time">' + timeAgoLabel(a.timestamp) + '</div>' +
+        '</div>';
+      row.addEventListener('click', () => {
+        map.flyTo({ center: [a.lng, a.lat], zoom: Math.max(map.getZoom(), 15), duration: 1200, essential: true });
+      });
+      agentsBody.appendChild(row);
+    });
+  }
+
+  // Les positions d'agents changent en continu : contrairement aux marqueurs POI
+  // (recréés à chaque update), on déplace le même Marker via setLngLat() pour un
+  // rendu fluide, sans churn DOM ni clignotement du popup ouvert.
+  function upsertAgentMarker(entry){
+    agentsState.set(entry.agentName, entry);
+
+    let marker = agentMarkers.get(entry.agentName);
+    if (!marker) {
+      const anchor = document.createElement('div');
+      anchor.className = 'agent-marker-anchor';
+      const el = document.createElement('div');
+      el.className = 'agent-marker';
+      el.innerHTML = '<i class="fa-solid fa-person-hiking"></i>';
+      anchor.appendChild(el);
+
+      const popup = new maplibregl.Popup({ offset: 20, maxWidth: '220px' });
+      marker = new maplibregl.Marker({ element: anchor })
+        .setLngLat([entry.lng, entry.lat])
+        .setPopup(popup)
+        .addTo(map);
+      agentMarkers.set(entry.agentName, marker);
+    } else {
+      marker.setLngLat([entry.lng, entry.lat]);
+    }
+
+    marker.getPopup().setHTML(
+      '<div class="agent-popup-name">' + entry.agentName + '</div>' +
+      '<div class="agent-popup-time">' + timeAgoLabel(entry.timestamp) + '</div>'
+    );
+
+    renderAgentsList();
+  }
+
+  function removeAgentMarker(agentName){
+    agentsState.delete(agentName);
+    const marker = agentMarkers.get(agentName);
+    if (marker) { marker.remove(); agentMarkers.delete(agentName); }
+    renderAgentsList();
+  }
+
+  // Repères photo d'événement : posés une fois, jamais déplacés — recreate simple,
+  // même pattern que les marqueurs POI (faible volume attendu).
+  function addEventMarker(entry){
+    if (eventMarkers.has(entry.id)) return;
+
+    const anchor = document.createElement('div');
+    anchor.className = 'event-marker-anchor';
+    const el = document.createElement('div');
+    el.className = 'event-marker';
+    el.innerHTML = '<i class="fa-solid fa-camera"></i>';
+    anchor.appendChild(el);
+
+    const time = new Date(entry.timestamp).toLocaleString('fr-FR');
+    const popupHtml =
+      '<img class="event-popup-photo" src="' + entry.photoUrl + '" alt="Photo signalée">' +
+      '<div class="event-popup-meta">' + entry.agentName + ' — ' + time + '</div>' +
+      (entry.note ? '<div class="event-popup-note">' + entry.note + '</div>' : '');
+
+    const popup = new maplibregl.Popup({ offset: 20, maxWidth: '260px' }).setHTML(popupHtml);
+    const marker = new maplibregl.Marker({ element: anchor })
+      .setLngLat([entry.lng, entry.lat])
+      .setPopup(popup)
+      .addTo(map);
+
+    eventMarkers.set(entry.id, marker);
+  }
+
+  // Connexion ouverte dès le chargement de la carte, indépendamment du panneau —
+  // un agent qui se déplace doit apparaître même si le panneau "Agents terrain" est fermé.
+  let ws = null;
+  let reconnectDelay = 1000;
+
+  function connectAgentsWs(){
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/agent-ws`);
+
+    ws.addEventListener('open', () => {
+      reconnectDelay = 1000;
+      ws.send(JSON.stringify({ type: 'hello', role: 'viewer' }));
+    });
+
+    ws.addEventListener('message', (e) => {
+      let msg;
+      try { msg = JSON.parse(e.data); } catch (err) { return; }
+
+      if (msg.type === 'snapshot') {
+        msg.agents.forEach(upsertAgentMarker);
+        msg.events.forEach(addEventMarker);
+      } else if (msg.type === 'position') {
+        upsertAgentMarker(msg);
+      } else if (msg.type === 'agent-offline') {
+        removeAgentMarker(msg.agentName);
+      } else if (msg.type === 'event-marker') {
+        addEventMarker(msg);
+      }
+    });
+
+    ws.addEventListener('close', () => {
+      setTimeout(connectAgentsWs, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 1.5, 15000);
+    });
+
+    ws.addEventListener('error', () => { ws.close(); });
+  }
+
+  if (map.loaded()) connectAgentsWs(); else map.on('load', connectAgentsWs);
+
+  setInterval(renderAgentsList, 30000); // rafraîchit les libellés "il y a X min" affichés
+})();
+
+// Panneaux déplaçables avec position persistée en localStorage
+(function(){
+  const STORAGE_KEY = 'submersion.panelPositions';
+  let positions = {};
+  try { positions = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch (e) { positions = {}; }
+
+  function savePositions() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); } catch (e) {}
+  }
+
+  function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+
+  function applyPosition(panel, pos) {
+    panel.style.left = pos.left + 'px';
+    panel.style.top = pos.top + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  }
+
+  function makeDraggable(panel, id) {
+    if (!panel) return;
+    panel.classList.add('draggable-panel');
+
+    const namedHandle = panel.querySelector('.panel-label-row') || panel.querySelector('.panel-label');
+    const handle = namedHandle || panel;
+    handle.classList.add('drag-handle');
+    if (!handle.querySelector('.drag-handle-icon')) {
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-up-down-left-right drag-handle-icon';
+      if (!namedHandle) {
+        icon.classList.add('drag-handle-icon--floating');
+        if (getComputedStyle(panel).position === 'static') panel.style.position = 'absolute';
+      }
+      handle.appendChild(icon);
+    }
+
+    // Restaure la position enregistrée (ou position initiale actuelle)
+    const saved = positions[id];
+    if (saved) {
+      const rect = panel.getBoundingClientRect();
+      const left = clamp(saved.left, 0, window.innerWidth - rect.width);
+      const top = clamp(saved.top, 0, window.innerHeight - rect.height);
+      applyPosition(panel, { left, top });
+    }
+
+    let startX, startY, startLeft, startTop, dragging = false;
+
+    function onPointerDown(e) {
+      if (e.target.closest('input, button, select, textarea, a, .toggle-btn')) return;
+      const rect = panel.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      startLeft = rect.left;
+      startTop = rect.top;
+      dragging = true;
+      panel.classList.add('dragging');
+      handle.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+      if (!dragging) return;
+      const rect = panel.getBoundingClientRect();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const left = clamp(startLeft + dx, 0, window.innerWidth - rect.width);
+      const top = clamp(startTop + dy, 0, window.innerHeight - rect.height);
+      applyPosition(panel, { left, top });
+    }
+
+    function onPointerUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      panel.classList.remove('dragging');
+      handle.classList.remove('dragging');
+      const rect = panel.getBoundingClientRect();
+      positions[id] = { left: rect.left, top: rect.top };
+      savePositions();
+      try { handle.releasePointerCapture(e.pointerId); } catch (err) {}
+    }
+
+    handle.addEventListener('pointerdown', onPointerDown);
+    handle.addEventListener('pointermove', onPointerMove);
+    handle.addEventListener('pointerup', onPointerUp);
+    handle.addEventListener('pointercancel', onPointerUp);
+  }
+
+  const panels = [
+    ['seaLevelPanel', 'seaLevel'],
+    ['poiPanel', 'poi'],
+    ['adminPanel', 'admin'],
+    ['cameraPanel', 'camera'],
+    ['weatherPanel', 'weather'],
+    ['cyclonePanel', 'cyclone'],
+    ['agentsPanel', 'agents']
+  ];
+
+  panels.forEach(([elId, storeId]) => {
+    makeDraggable(document.getElementById(elId), storeId);
+  });
+})();
+</script>
+</body>
+</html>

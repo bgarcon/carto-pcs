@@ -1,0 +1,371 @@
+{
+  "name": "DESHAIES",
+  "center": [
+    16.322857719356094,
+    -61.7677116394043
+  ],
+  "zoom": 17,
+  "categories": [
+    {
+      "id": "aires-de-stationnement",
+      "label": "Aires de stationnement",
+      "color": "#1E88E5",
+      "icon": "parking",
+      "places": [
+        {
+          "name": "Esplanade des fêtes",
+          "description": "",
+          "lat": 16.304527,
+          "lng": -61.794186,
+          "image": null
+        },
+        {
+          "name": "Place de l'Eglise",
+          "description": "",
+          "lat": 16.306403,
+          "lng": -61.793905,
+          "image": null
+        },
+        {
+          "name": "Place de la Bibliothèque",
+          "description": "",
+          "lat": 16.307685,
+          "lng": -61.793965,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "batiments-communaux",
+      "label": "Bâtiments communaux",
+      "color": "#00897B",
+      "icon": "building",
+      "places": [
+        {
+          "name": "Mairie Annexe",
+          "description": "",
+          "lat": 16.306894,
+          "lng": -61.794525,
+          "image": null
+        },
+        {
+          "name": "Mairie de Deshaies",
+          "description": "",
+          "lat": 16.306923,
+          "lng": -61.794327,
+          "image": null
+        },
+        {
+          "name": "Maison des Associations",
+          "description": "",
+          "lat": 16.306479,
+          "lng": -61.794197,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "culture-et-loisirs",
+      "label": "Culture et loisirs",
+      "color": "#8B0000",
+      "icon": "theater",
+      "places": [
+        {
+          "name": "Bilbliothèque Municipale",
+          "description": "",
+          "lat": 16.307465,
+          "lng": -61.793953,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "death-in-paradise",
+      "label": "Death in Paradise",
+      "color": "#6A1B9A",
+      "icon": "movie",
+      "places": [
+        {
+          "name": "Le Commissariat d'Honoré",
+          "description": "En réalité il s'agit du presbytère qui se trouve près de l'Eglise de Saint Pierre et St Paul dans lequel certaines scènes de la série sont tournées. Le presbytère est l'un des lieux emblématiques de la série.",
+          "lat": 16.3064347,
+          "lng": -61.7937322,
+          "image": null
+        },
+        {
+          "name": "Le Catherine's Bar",
+          "description": "C'est le lieu où se termine la plupart des épisodes de la série. Le fameux Catherine's bar et son délicieux cocktail tropical.",
+          "lat": 16.3057327,
+          "lng": -61.794602,
+          "image": null
+        },
+        {
+          "name": "La Maison de l'Inspecteur",
+          "description": "Maison typique montée pour les besoins du tournage sur la magnifique plage de la Perle à Riflet.",
+          "lat": 16.3399,
+          "lng": -61.7801576,
+          "image": null
+        },
+        {
+          "name": "Le Port de Pêche",
+          "description": "Nombreux épisodes ont été tournés dans ce petit port de pêche en collaboration avec les marins pêcheurs de la commune.",
+          "lat": 16.3049643,
+          "lng": -61.7962642,
+          "image": null
+        },
+        {
+          "name": "Le Jardin Botanique",
+          "description": "Ancienne propriété de Coluche, il prête son cadre idyllique au tournage de la saison 3 épisode 1 dans lequel l'inspecteur Richard Poole est retrouvé assassiné.",
+          "lat": 16.2999197,
+          "lng": -61.7974643,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "divers",
+      "label": "Divers",
+      "color": "#D6006C",
+      "icon": "star",
+      "places": [
+        {
+          "name": "Cimetière",
+          "description": "",
+          "lat": 16.309266,
+          "lng": -61.793681,
+          "image": null
+        },
+        {
+          "name": "Déchetterie",
+          "description": "",
+          "lat": 16.310949,
+          "lng": -61.788322,
+          "image": null
+        },
+        {
+          "name": "Eglise de Deshaies",
+          "description": "",
+          "lat": 16.306707,
+          "lng": -61.793781,
+          "image": null
+        },
+        {
+          "name": "Office du tourisme",
+          "description": "",
+          "lat": 16.306446,
+          "lng": -61.794575,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "equipements-sportifs",
+      "label": "Equipements sportifs",
+      "color": "#A0522D",
+      "icon": "ball",
+      "places": [
+        {
+          "name": "Stade de Bas Vent",
+          "description": "",
+          "lat": 16.343985,
+          "lng": -61.772325,
+          "image": null
+        },
+        {
+          "name": "Stade Municipal",
+          "description": "",
+          "lat": 16.312298,
+          "lng": -61.790795,
+          "image": null
+        },
+        {
+          "name": "Tennis Club",
+          "description": "",
+          "lat": 16.304089,
+          "lng": -61.795406,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "plages",
+      "label": "Plages",
+      "color": "#00B7EB",
+      "icon": "umbrella-beach",
+      "places": [
+        {
+          "name": "Plage de Grande Anse",
+          "description": "",
+          "lat": 16.322415,
+          "lng": -61.788343,
+          "image": null
+        },
+        {
+          "name": "Plage de La Perle",
+          "description": "",
+          "lat": 16.340979,
+          "lng": -61.778902,
+          "image": null
+        },
+        {
+          "name": "Plage de Leroux",
+          "description": "",
+          "lat": 16.275751,
+          "lng": -61.804134,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "sante",
+      "label": "Santé",
+      "color": "#2E7D32",
+      "icon": "health",
+      "places": [
+        {
+          "name": "Dispensaire",
+          "description": "",
+          "lat": 16.303829,
+          "lng": -61.796268,
+          "image": null
+        },
+        {
+          "name": "Médecin",
+          "description": "",
+          "lat": 16.306101,
+          "lng": -61.794334,
+          "image": null
+        },
+        {
+          "name": "Médecin",
+          "description": "",
+          "lat": 16.308002,
+          "lng": -61.793633,
+          "image": null
+        },
+        {
+          "name": "Médecin",
+          "description": "",
+          "lat": 16.311856,
+          "lng": -61.78962,
+          "image": null
+        },
+        {
+          "name": "Pharmacie",
+          "description": "",
+          "lat": 16.306223,
+          "lng": -61.794483,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "securite-et-secours",
+      "label": "Sécurité et secours",
+      "color": "#C0143C",
+      "icon": "shield",
+      "places": [
+        {
+          "name": "Douane",
+          "description": "",
+          "lat": 16.303942,
+          "lng": -61.796079,
+          "image": null
+        },
+        {
+          "name": "Gendarmerie",
+          "description": "",
+          "lat": 16.310352,
+          "lng": -61.79065,
+          "image": null
+        },
+        {
+          "name": "Pompiers",
+          "description": "",
+          "lat": 16.311171,
+          "lng": -61.790392,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "label": "Services",
+      "color": "#E67300",
+      "icon": "briefcase",
+      "places": [
+        {
+          "name": "Bureau de Poste",
+          "description": "",
+          "lat": 16.307783,
+          "lng": -61.794369,
+          "image": null
+        },
+        {
+          "name": "Garage",
+          "description": "",
+          "lat": 16.343171,
+          "lng": -61.772186,
+          "image": null
+        },
+        {
+          "name": "Station Service",
+          "description": "",
+          "lat": 16.307968,
+          "lng": -61.794144,
+          "image": null
+        },
+        {
+          "name": "Station Service",
+          "description": "",
+          "lat": 16.321313,
+          "lng": -61.786337,
+          "image": null
+        }
+      ]
+    },
+    {
+      "id": "sites-touristiques",
+      "label": "Sites touristiques",
+      "color": "#2FA84F",
+      "icon": "landmark",
+      "places": [
+        {
+          "name": "Baie du Bourg",
+          "description": "",
+          "lat": 16.306898,
+          "lng": -61.797497,
+          "image": null
+        },
+        {
+          "name": "Hôtel Fort Royal",
+          "description": "",
+          "lat": 16.348391,
+          "lng": -61.774074,
+          "image": "https://villededeshaies.fr/images/logodeshaies.svg"
+        },
+        {
+          "name": "Jardin Botanique",
+          "description": "",
+          "lat": 16.298153,
+          "lng": -61.798214,
+          "image": "c"
+        },
+        {
+          "name": "Point de vue de Gadet",
+          "description": "",
+          "lat": 16.330065,
+          "lng": -61.786852,
+          "image": "d"
+        },
+        {
+          "name": "Port de pêche",
+          "description": "",
+          "lat": 16.304442,
+          "lng": -61.795489,
+          "image": "e"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paramètres — Submersion Guadeloupe</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5c3.5 5 7 9.2 7 13a7 7 0 1 1-14 0c0-3.8 3.5-8 7-13z' fill='none' stroke='%233ec6e0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="map-config.js"></script>
+<style>
+:root{
+  --bg:#0a1420;
+  --panel:#0f1e2e;
+  --panel-2:#132a3f;
+  --line:#1e3a52;
+  --text:#e8eef2;
+  --text-dim:#8fa3b3;
+  --water:#3ec6e0;
+  --water-dim:#2a5a6b;
+  --alert:#ff6b4a;
+  --alert-dim:#8a4536;
+  --good:#5fd68a;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  display:flex;
+  justify-content:center;
+  padding:40px 20px 60px;
+}
+.wrap{
+  width:100%;
+  max-width:640px;
+}
+.back-link{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:12px;
+  color:var(--text-dim);
+  text-decoration:none;
+  margin-bottom:22px;
+  transition:color .15s ease;
+}
+.back-link:hover{ color:var(--water); }
+
+.header{
+  margin-bottom:28px;
+}
+.header h1{
+  font-family:"Fraunces", serif;
+  font-weight:700;
+  font-size:26px;
+  margin:0 0 6px;
+}
+.header h1 .accent{ color:var(--water); font-style:italic; font-weight:600; }
+.header .sub{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+  letter-spacing:0.5px;
+  text-transform:uppercase;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:24px 24px 22px;
+  margin-bottom:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.45);
+}
+.card-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text-dim);
+  margin-bottom:18px;
+}
+.card-title i{ color:var(--water); font-size:14px; width:16px; text-align:center; }
+
+.field-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.field label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  color:var(--text-dim);
+}
+.field input[type="number"],
+.field select{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  color:var(--text);
+  font-family:"IBM Plex Mono", monospace;
+  font-size:14px;
+  padding:10px 12px;
+  outline:none;
+  transition:border-color .15s ease;
+  width:100%;
+  cursor:pointer;
+}
+.field input[type="number"]:focus,
+.field select:focus{ border-color:var(--water); }
+.field input[type="color"]{
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:4px;
+  width:100%;
+  height:42px;
+  cursor:pointer;
+}
+.field-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:16px;
+}
+@media (max-width:520px){
+  .field-row{ grid-template-columns:1fr; }
+}
+.field-hint{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  opacity:0.7;
+}
+
+.error-msg{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--alert);
+  margin-top:10px;
+  display:none;
+}
+.error-msg.visible{ display:block; }
+
+.actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.btn{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:12px;
+  border-radius:10px;
+  padding:12px 20px;
+  cursor:pointer;
+  border:1px solid var(--line);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:all .15s ease;
+}
+.btn-primary{
+  background:var(--water-dim);
+  border-color:var(--water);
+  color:var(--text);
+}
+.btn-primary:hover{ background:var(--water); color:var(--bg); }
+.btn-secondary{
+  background:var(--panel-2);
+  color:var(--text-dim);
+}
+.btn-secondary:hover{ border-color:var(--alert); color:var(--alert); }
+
+.progress-track{
+  width:100%;
+  height:8px;
+  border-radius:4px;
+  background:var(--panel-2);
+  overflow:hidden;
+  margin:14px 0 8px;
+  display:none;
+}
+.progress-track.visible{ display:block; }
+.progress-fill{
+  height:100%;
+  width:0%;
+  background:var(--water);
+  transition:width .2s ease;
+}
+.progress-label{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  display:none;
+}
+.progress-label.visible{ display:block; }
+
+.toast{
+  position:fixed;
+  bottom:26px;
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--panel);
+  border:1px solid var(--good);
+  color:var(--good);
+  font-family:"IBM Plex Mono", monospace;
+  font-size:12px;
+  padding:11px 20px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  opacity:0;
+  pointer-events:none;
+  transition:all .25s ease;
+  box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+.toast.visible{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+@media (max-width:520px){
+  .field-grid{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back-link" href="index.html"><i class="fa-solid fa-arrow-left"></i>Retour à la carte</a>
+
+  <div class="header">
+    <h1>Paramètres <span class="accent">carte</span></h1>
+    <div class="sub">Limites géographiques et niveaux de zoom</div>
+  </div>
+
+  <form id="settingsForm">
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-map"></i>Emprise géographique</div>
+      <div class="field-grid">
+        <div class="field">
+          <label for="minLon">Longitude min.</label>
+          <input type="number" id="minLon" step="0.001" required>
+          <span class="field-hint">bord ouest, en degrés</span>
+        </div>
+        <div class="field">
+          <label for="maxLon">Longitude max.</label>
+          <input type="number" id="maxLon" step="0.001" required>
+          <span class="field-hint">bord est, en degrés</span>
+        </div>
+        <div class="field">
+          <label for="minLat">Latitude min.</label>
+          <input type="number" id="minLat" step="0.001" required>
+          <span class="field-hint">bord sud, en degrés</span>
+        </div>
+        <div class="field">
+          <label for="maxLat">Latitude max.</label>
+          <input type="number" id="maxLat" step="0.001" required>
+          <span class="field-hint">bord nord, en degrés</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i>Niveaux de zoom</div>
+      <div class="field-grid">
+        <div class="field">
+          <label for="minZoom">Zoom minimum</label>
+          <input type="number" id="minZoom" step="0.1" min="0" max="22" required>
+          <span class="field-hint">vue la plus large autorisée</span>
+        </div>
+        <div class="field">
+          <label for="maxZoom">Zoom maximum</label>
+          <input type="number" id="maxZoom" step="0.1" min="0" max="22" required>
+          <span class="field-hint">vue la plus rapprochée autorisée</span>
+        </div>
+      </div>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-water"></i>Filtre houle LIDAR</div>
+      <div class="field">
+        <label for="swellFilterThreshold">Seuil (mètres)</label>
+        <input type="number" id="swellFilterThreshold" step="0.1" min="0" max="5" required>
+        <span class="field-hint">élévations mer sous ce seuil ramenées à 0 — le LIDAR capture la houle au moment du survol, ce qui crée du bruit près du niveau 0 en mode Sombre</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-draw-polygon"></i>Limite communale</div>
+      <div class="field">
+        <label for="communeBoundary">Commune</label>
+        <select id="communeBoundary">
+          <option value="">Aucune</option>
+        </select>
+        <span class="field-hint">trace le contour administratif officiel (IGN Admin Express COG) de la commune choisie sur la carte</span>
+      </div>
+      <div class="field-row" style="margin-top:16px;">
+        <div class="field">
+          <label for="communeBoundaryColor">Couleur</label>
+          <input type="color" id="communeBoundaryColor">
+        </div>
+        <div class="field">
+          <label for="communeBoundaryWidth">Épaisseur (px)</label>
+          <input type="number" id="communeBoundaryWidth" step="0.1" min="0.5" max="10" required>
+        </div>
+        <div class="field">
+          <label for="communeBoundaryStyle">Style</label>
+          <select id="communeBoundaryStyle">
+            <option value="solid">Trait plein</option>
+            <option value="dashed">Tirets</option>
+            <option value="dotted">Pointillés</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="fa-solid fa-cloud-rain"></i>Radar météo (nuages / pluie)</div>
+      <div class="field">
+        <label for="weatherApiKey">Clé API OpenWeatherMap</label>
+        <input type="text" id="weatherApiKey" placeholder="Laisser vide pour désactiver la couche" autocomplete="off">
+        <span class="field-hint">clé gratuite obtenue sur <a href="https://openweathermap.org/api" target="_blank" rel="noopener">openweathermap.org</a> — active le bouton radar sur la carte</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i>Enregistrer</button>
+      <button type="button" class="btn btn-secondary" id="resetBtn"><i class="fa-solid fa-rotate-left"></i>Valeurs par défaut</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-title"><i class="fa-solid fa-download"></i>Cache hors-ligne des fonds de carte</div>
+    <div class="field-hint" style="margin-bottom:14px;display:block;">Télécharge à l'avance les tuiles IGN (ortho, plan, routes) de la commune sélectionnée ci-dessus, zooms 9 à 15 — les rechargements suivants seront instantanés et hors-ligne pour cette zone.</div>
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" id="prefetchBtn"><i class="fa-solid fa-download"></i>Précharger le cache</button>
+    </div>
+    <div class="progress-track" id="prefetchTrack"><div class="progress-fill" id="prefetchFill"></div></div>
+    <div class="progress-label" id="prefetchLabel"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="fa-solid fa-box-archive"></i>Sauvegarde de la configuration</div>
+    <div class="field-hint" style="margin-bottom:14px;display:block;">Inclut l'emprise, les niveaux de zoom et les positions préréglées.</div>
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" id="exportBtn"><i class="fa-solid fa-file-export"></i>Exporter</button>
+      <button type="button" class="btn btn-secondary" id="importBtn"><i class="fa-solid fa-file-import"></i>Importer</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastText">Paramètres enregistrés</span></div>
+
+<script>
+(function(){
+  const form = document.getElementById('settingsForm');
+  const fields = {
+    minLon: document.getElementById('minLon'),
+    maxLon: document.getElementById('maxLon'),
+    minLat: document.getElementById('minLat'),
+    maxLat: document.getElementById('maxLat'),
+    minZoom: document.getElementById('minZoom'),
+    maxZoom: document.getElementById('maxZoom'),
+    swellFilterThreshold: document.getElementById('swellFilterThreshold'),
+    communeBoundary: document.getElementById('communeBoundary'),
+    communeBoundaryColor: document.getElementById('communeBoundaryColor'),
+    communeBoundaryWidth: document.getElementById('communeBoundaryWidth'),
+    communeBoundaryStyle: document.getElementById('communeBoundaryStyle'),
+    weatherApiKey: document.getElementById('weatherApiKey')
+  };
+  const errorMsg = document.getElementById('errorMsg');
+  const toast = document.getElementById('toast');
+  const toastText = document.getElementById('toastText');
+
+  // Peuple le select des communes depuis les données officielles IGN Admin Express COG
+  let communesGeoJson = null;
+  fetch('communes-guadeloupe.geojson')
+    .then(r => r.json())
+    .then(data => {
+      communesGeoJson = data;
+      const communes = data.features
+        .map(f => ({ code: f.properties.code, nom: f.properties.nom }))
+        .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+      communes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.code;
+        opt.textContent = c.nom;
+        fields.communeBoundary.appendChild(opt);
+      });
+      fields.communeBoundary.value = loadMapConfig().communeBoundary;
+    })
+    .catch(err => console.error('Erreur de chargement des communes :', err));
+
+  // Calcule la bounding box (lon/lat) d'une géométrie Polygon/MultiPolygon
+  function boundingBoxOf(geometry){
+    let minLon = Infinity, maxLon = -Infinity, minLat = Infinity, maxLat = -Infinity;
+    function visitRing(ring){
+      ring.forEach(([lon, lat]) => {
+        if (lon < minLon) minLon = lon;
+        if (lon > maxLon) maxLon = lon;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+      });
+    }
+    const polygons = geometry.type === 'MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+    polygons.forEach(polygon => polygon.forEach(visitRing));
+    return { minLon, maxLon, minLat, maxLat };
+  }
+
+  // Zoom Web Mercator le plus bas permettant d'afficher toute l'emprise (formule utilisée par MapLibre en interne)
+  function minViableZoom(minLon, maxLon, minLat, maxLat){
+    const latRad = lat => lat * Math.PI / 180;
+    const mercatorY = lat => Math.log(Math.tan(Math.PI / 4 + latRad(lat) / 2));
+    const lonSpan = maxLon - minLon;
+    const latSpan = Math.abs(mercatorY(maxLat) - mercatorY(minLat));
+    const zoomForLon = Math.log2(360 / lonSpan);
+    const zoomForLat = Math.log2((2 * Math.PI) / latSpan);
+    // -2 : marge de sécurité pour rester confortablement dézoomable même sur des viewports étroits
+    return Math.max(0, Math.min(zoomForLon, zoomForLat) - 2);
+  }
+
+  // Applique automatiquement l'emprise géographique (avec une marge de 200%) de la commune choisie,
+  // et recalcule le zoom minimum pour qu'il reste toujours atteignable sur cette emprise
+  const MARGIN_RATIO = 2.0;
+  fields.communeBoundary.addEventListener('change', () => {
+    const code = fields.communeBoundary.value;
+    if (!code || !communesGeoJson) return;
+    const feature = communesGeoJson.features.find(f => f.properties.code === code);
+    if (!feature) return;
+
+    const bbox = boundingBoxOf(feature.geometry);
+    const lonMargin = (bbox.maxLon - bbox.minLon) * MARGIN_RATIO;
+    const latMargin = (bbox.maxLat - bbox.minLat) * MARGIN_RATIO;
+
+    const minLon = bbox.minLon - lonMargin;
+    const maxLon = bbox.maxLon + lonMargin;
+    const minLat = bbox.minLat - latMargin;
+    const maxLat = bbox.maxLat + latMargin;
+
+    fields.minLon.value = minLon.toFixed(3);
+    fields.maxLon.value = maxLon.toFixed(3);
+    fields.minLat.value = minLat.toFixed(3);
+    fields.maxLat.value = maxLat.toFixed(3);
+
+    const viableZoom = minViableZoom(minLon, maxLon, minLat, maxLat);
+    if (parseFloat(fields.minZoom.value) < viableZoom) {
+      fields.minZoom.value = viableZoom.toFixed(1);
+      if (parseFloat(fields.maxZoom.value) < viableZoom) {
+        fields.maxZoom.value = Math.min(22, viableZoom + 5).toFixed(1);
+      }
+    }
+  });
+
+  function fillForm(config){
+    Object.keys(fields).forEach(key => { fields[key].value = config[key]; });
+  }
+
+  fillForm(loadMapConfig());
+
+  function showError(msg){
+    errorMsg.textContent = msg;
+    errorMsg.classList.add('visible');
+  }
+  function clearError(){
+    errorMsg.classList.remove('visible');
+    errorMsg.textContent = '';
+  }
+
+  function showToast(msg){
+    toastText.textContent = msg || 'Paramètres enregistrés';
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 2200);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    clearError();
+
+    const config = {
+      minLon: parseFloat(fields.minLon.value),
+      maxLon: parseFloat(fields.maxLon.value),
+      minLat: parseFloat(fields.minLat.value),
+      maxLat: parseFloat(fields.maxLat.value),
+      minZoom: parseFloat(fields.minZoom.value),
+      maxZoom: parseFloat(fields.maxZoom.value),
+      swellFilterThreshold: parseFloat(fields.swellFilterThreshold.value),
+      communeBoundary: fields.communeBoundary.value,
+      communeBoundaryColor: fields.communeBoundaryColor.value,
+      communeBoundaryWidth: parseFloat(fields.communeBoundaryWidth.value),
+      communeBoundaryStyle: fields.communeBoundaryStyle.value,
+      weatherApiKey: fields.weatherApiKey.value.trim()
+    };
+
+    const NON_NUMERIC_FIELDS = ['communeBoundary', 'communeBoundaryColor', 'communeBoundaryStyle', 'weatherApiKey'];
+    if (Object.entries(config).some(([key, v]) => !NON_NUMERIC_FIELDS.includes(key) && Number.isNaN(v))) {
+      showError('Tous les champs doivent contenir un nombre valide.');
+      return;
+    }
+    if (config.communeBoundaryWidth <= 0) {
+      showError("L'épaisseur de la limite communale doit être supérieure à 0.");
+      return;
+    }
+    if (config.minLon >= config.maxLon) {
+      showError('La longitude minimum doit être inférieure à la longitude maximum.');
+      return;
+    }
+    if (config.minLat >= config.maxLat) {
+      showError('La latitude minimum doit être inférieure à la latitude maximum.');
+      return;
+    }
+    if (config.minZoom >= config.maxZoom) {
+      showError('Le zoom minimum doit être inférieur au zoom maximum.');
+      return;
+    }
+    if (config.minLon < -180 || config.maxLon > 180) {
+      showError('La longitude doit être comprise entre -180 et 180.');
+      return;
+    }
+    if (config.minLat < -90 || config.maxLat > 90) {
+      showError('La latitude doit être comprise entre -90 et 90.');
+      return;
+    }
+    if (config.swellFilterThreshold < 0 || config.swellFilterThreshold > 5) {
+      showError('Le seuil du filtre houle doit être compris entre 0 et 5 mètres.');
+      return;
+    }
+
+    saveMapConfig(config);
+    showToast();
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    fillForm(MAP_CONFIG_DEFAULTS);
+    clearError();
+  });
+
+  // Préchargement du cache hors-ligne (tuiles IGN) pour la commune sélectionnée,
+  // ou pour l'emprise actuellement affichée dans le formulaire si aucune n'est choisie.
+  const PREFETCH_MIN_ZOOM = 9, PREFETCH_MAX_ZOOM = 15;
+  const prefetchBtn = document.getElementById('prefetchBtn');
+  const prefetchTrack = document.getElementById('prefetchTrack');
+  const prefetchFill = document.getElementById('prefetchFill');
+  const prefetchLabel = document.getElementById('prefetchLabel');
+
+  prefetchBtn.addEventListener('click', () => {
+    let bbox;
+    const code = fields.communeBoundary.value;
+    const feature = code && communesGeoJson ? communesGeoJson.features.find(f => f.properties.code === code) : null;
+    if (feature) {
+      bbox = boundingBoxOf(feature.geometry);
+    } else {
+      bbox = {
+        minLon: parseFloat(fields.minLon.value),
+        maxLon: parseFloat(fields.maxLon.value),
+        minLat: parseFloat(fields.minLat.value),
+        maxLat: parseFloat(fields.maxLat.value)
+      };
+    }
+
+    const qs = new URLSearchParams({
+      minLon: bbox.minLon, maxLon: bbox.maxLon,
+      minLat: bbox.minLat, maxLat: bbox.maxLat,
+      minZoom: PREFETCH_MIN_ZOOM, maxZoom: PREFETCH_MAX_ZOOM
+    });
+
+    prefetchBtn.disabled = true;
+    prefetchTrack.classList.add('visible');
+    prefetchLabel.classList.add('visible');
+    prefetchFill.style.width = '0%';
+    prefetchLabel.textContent = 'Préchargement en cours…';
+
+    const es = new EventSource(`${location.origin}/ign-prefetch?${qs}`);
+    es.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      const pct = data.total ? Math.round((data.done / data.total) * 100) : 0;
+      prefetchFill.style.width = pct + '%';
+      prefetchLabel.textContent = `${data.done} / ${data.total} tuiles (${pct}%) — ${data.cached} déjà en cache`;
+      if (data.finished) {
+        es.close();
+        prefetchBtn.disabled = false;
+        prefetchLabel.textContent = `Terminé : ${data.total} tuiles en cache pour cette zone.`;
+        showToast('Cache hors-ligne mis à jour.');
+      }
+    };
+    es.onerror = () => {
+      es.close();
+      prefetchBtn.disabled = false;
+      prefetchLabel.textContent = 'Échec du préchargement — vérifiez que le serveur local tourne.';
+    };
+  });
+
+  // Export / import de la configuration complète
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    downloadConfigBundle();
+    showToast('Configuration exportée.');
+  });
+
+  const importFile = document.getElementById('importFile');
+  document.getElementById('importBtn').addEventListener('click', () => importFile.click());
+
+  importFile.addEventListener('change', async () => {
+    const file = importFile.files[0];
+    importFile.value = '';
+    if (!file) return;
+    try {
+      const { mapConfig } = await readAndImportConfigFile(file);
+      fillForm(mapConfig);
+      clearError();
+      showToast('Configuration importée.');
+    } catch (e) {
+      showError(e.message || "Échec de l'import du fichier.");
+    }
+  });
+})();
+</script>
+</body>
+</html>

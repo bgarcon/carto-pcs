@@ -1,0 +1,12 @@
+node_modules/
+.claude/
+
+# Secrets
+.env
+certs/
+
+# Données générées / cache local (pas de source)
+ign-cache/
+terrain-tiles/
+event-photos/
+server.log

@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Submersion — Terrain</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1420">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5c3.5 5 7 9.2 7 13a7 7 0 1 1-14 0c0-3.8 3.5-8 7-13z' fill='none' stroke='%233ec6e0' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="agent-config.js"></script>
+<style>
+:root{
+  --bg:#0a1420;
+  --panel:#0f1e2e;
+  --panel-2:#132a3f;
+  --line:#1e3a52;
+  --text:#e8eef2;
+  --text-dim:#8fa3b3;
+  --water:#3ec6e0;
+  --water-dim:#2a5a6b;
+  --alert:#ff6b4a;
+  --alert-dim:#8a4536;
+  --good:#5fd68a;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"IBM Plex Sans", system-ui, sans-serif;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-tap-highlight-color:transparent;
+}
+.screen{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding:20px 18px 28px;
+}
+header{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  margin-bottom:22px;
+}
+header h1{
+  font-family:"Fraunces", serif;
+  font-weight:700;
+  font-size:22px;
+  margin:0;
+}
+header h1 .accent{ color:var(--water); font-style:italic; font-weight:600; }
+header .sub{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10.5px;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:16px;
+}
+.card-label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--text-dim);
+  margin-bottom:12px;
+}
+.card-label i{ color:var(--water); font-size:13px; }
+
+input[type="text"]{
+  width:100%;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--text);
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:15px;
+  padding:13px 14px;
+  outline:none;
+}
+input[type="text"]:focus{ border-color:var(--water); }
+
+button.primary{
+  width:100%;
+  margin-top:12px;
+  background:var(--water-dim);
+  border:1px solid var(--water);
+  color:var(--text);
+  font-family:"IBM Plex Sans", sans-serif;
+  font-weight:600;
+  font-size:15px;
+  padding:14px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:background .15s ease;
+}
+button.primary:active{ background:var(--water); color:var(--bg); }
+
+.identity-screen{ display:none; flex:1; flex-direction:column; justify-content:center; }
+.identity-screen.visible{ display:flex; }
+.main-screen{ display:none; }
+.main-screen.visible{ display:block; }
+
+.status-row{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-bottom:18px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:12px;
+  color:var(--text-dim);
+}
+.status-dot{
+  width:9px; height:9px;
+  border-radius:50%;
+  background:var(--alert);
+  flex-shrink:0;
+  transition:background .2s ease;
+}
+.status-dot.connected{ background:var(--good); }
+.agent-name-tag{
+  margin-left:auto;
+  color:var(--text);
+}
+
+.toggle-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.toggle-row-text{ flex:1; min-width:0; }
+.toggle-row-title{
+  font-weight:600;
+  font-size:15px;
+  margin-bottom:2px;
+}
+.toggle-row-sub{
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11px;
+  color:var(--text-dim);
+}
+.switch{
+  position:relative;
+  width:48px;
+  height:28px;
+  flex-shrink:0;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:16px;
+  cursor:pointer;
+  transition:background .15s ease, border-color .15s ease;
+}
+.switch.on{ background:var(--water-dim); border-color:var(--water); }
+.switch::after{
+  content:'';
+  position:absolute;
+  top:2px; left:2px;
+  width:22px; height:22px;
+  border-radius:50%;
+  background:var(--text-dim);
+  transition:transform .15s ease, background .15s ease;
+}
+.switch.on::after{ transform:translateX(20px); background:var(--water); }
+
+.gps-info{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11.5px;
+  color:var(--text-dim);
+  display:none;
+}
+.gps-info.visible{ display:block; }
+.gps-info b{ color:var(--text); font-weight:600; }
+.gps-error{
+  margin-top:14px;
+  padding-top:14px;
+  border-top:1px solid var(--line);
+  font-size:13px;
+  color:var(--alert);
+  display:none;
+}
+.gps-error.visible{ display:block; }
+
+.event-form{ display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+.event-form.visible{ display:block; }
+.event-form textarea{
+  width:100%;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:var(--text);
+  font-family:"IBM Plex Sans", sans-serif;
+  font-size:14px;
+  padding:12px 14px;
+  outline:none;
+  resize:vertical;
+  min-height:60px;
+}
+.event-form textarea:focus{ border-color:var(--water); }
+.event-preview{
+  width:100%;
+  max-height:180px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-top:10px;
+  display:none;
+}
+.event-preview.visible{ display:block; }
+.event-status{
+  margin-top:10px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:11.5px;
+  display:none;
+}
+.event-status.visible{ display:block; }
+.event-status.ok{ color:var(--good); }
+.event-status.error{ color:var(--alert); }
+.event-status.pending{ color:var(--text-dim); }
+
+.footer-note{
+  margin-top:auto;
+  padding-top:20px;
+  font-family:"IBM Plex Mono", monospace;
+  font-size:10px;
+  color:var(--text-dim);
+  opacity:0.6;
+  text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <header>
+    <h1>Submersion <span class="accent">Terrain</span></h1>
+  </header>
+
+  <div class="identity-screen" id="identityScreen">
+    <div class="card">
+      <div class="card-label"><i class="fa-solid fa-id-badge"></i>Identification</div>
+      <input type="text" id="agentNameInput" placeholder="Votre nom…" maxlength="40" autocomplete="off">
+      <button class="primary" id="identityConfirmBtn">Continuer</button>
+    </div>
+  </div>
+
+  <div class="main-screen" id="mainScreen">
+    <div class="status-row">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Connexion…</span>
+      <span class="agent-name-tag" id="agentNameTag"></span>
+    </div>
+
+    <div class="card">
+      <div class="card-label"><i class="fa-solid fa-location-crosshairs"></i>Position</div>
+      <div class="toggle-row">
+        <div class="toggle-row-text">
+          <div class="toggle-row-title">Partager ma position</div>
+          <div class="toggle-row-sub">Envoi en temps réel à la supervision</div>
+        </div>
+        <div class="switch" id="trackSwitch"></div>
+      </div>
+      <div class="gps-info" id="gpsInfo">Dernière position : <b id="gpsLast">—</b></div>
+      <div class="gps-error" id="gpsError"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label"><i class="fa-solid fa-camera"></i>Signaler un événement</div>
+      <button class="primary" id="eventPhotoBtn"><i class="fa-solid fa-camera"></i> Prendre une photo</button>
+      <input type="file" accept="image/*" capture="environment" id="eventPhotoInput" hidden>
+
+      <div class="event-form" id="eventForm">
+        <img class="event-preview" id="eventPreview" alt="">
+        <textarea id="eventNote" placeholder="Note (facultatif) — houle, arbre arraché…" maxlength="500"></textarea>
+        <button class="primary" id="eventSendBtn"><i class="fa-solid fa-paper-plane"></i> Envoyer le signalement</button>
+        <div class="event-status" id="eventStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Submersion Guadeloupe — suivi terrain</div>
+</div>
+
+<script>
+(function(){
+  // --- Identité ---
+  const identityScreen = document.getElementById('identityScreen');
+  const mainScreen = document.getElementById('mainScreen');
+  const agentNameInput = document.getElementById('agentNameInput');
+  const identityConfirmBtn = document.getElementById('identityConfirmBtn');
+  const agentNameTag = document.getElementById('agentNameTag');
+
+  let agentName = loadAgentName();
+
+  function showMainScreen(){
+    agentNameTag.textContent = agentName;
+    identityScreen.classList.remove('visible');
+    mainScreen.classList.add('visible');
+    connectWs();
+  }
+
+  function showIdentityScreen(){
+    identityScreen.classList.add('visible');
+    mainScreen.classList.remove('visible');
+  }
+
+  identityConfirmBtn.addEventListener('click', () => {
+    const name = agentNameInput.value.trim();
+    if (!name) return;
+    agentName = name;
+    saveAgentName(name);
+    showMainScreen();
+  });
+  agentNameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') identityConfirmBtn.click();
+  });
+
+  if (agentName) showMainScreen(); else showIdentityScreen();
+
+  // --- WebSocket (reconnexion automatique — réseau instable en zone cyclone) ---
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  let ws = null;
+  let reconnectDelay = 1000;
+
+  function connectWs(){
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/agent-ws`);
+
+    ws.addEventListener('open', () => {
+      statusDot.classList.add('connected');
+      statusText.textContent = 'Connecté';
+      reconnectDelay = 1000;
+      ws.send(JSON.stringify({ type: 'hello', role: 'agent', agentName }));
+    });
+
+    ws.addEventListener('close', () => {
+      statusDot.classList.remove('connected');
+      statusText.textContent = 'Déconnecté — nouvelle tentative…';
+      setTimeout(connectWs, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 1.5, 15000);
+    });
+
+    ws.addEventListener('error', () => { ws.close(); });
+  }
+
+  function sendWs(msg){
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+  }
+
+  // --- Partage de position (watchPosition, envoi throttlé) ---
+  const trackSwitch = document.getElementById('trackSwitch');
+  const gpsInfo = document.getElementById('gpsInfo');
+  const gpsLast = document.getElementById('gpsLast');
+  const gpsError = document.getElementById('gpsError');
+
+  let watchId = null;
+  let lastSentAt = 0;
+  const SEND_INTERVAL_MS = 4000;
+
+  function onPosition(pos){
+    gpsError.classList.remove('visible');
+    gpsInfo.classList.add('visible');
+    const now = Date.now();
+    gpsLast.textContent = new Date(now).toLocaleTimeString('fr-FR') + ` (±${Math.round(pos.coords.accuracy)}m)`;
+    if (now - lastSentAt < SEND_INTERVAL_MS) return;
+    lastSentAt = now;
+    sendWs({
+      type: 'position',
+      agentName,
+      lat: pos.coords.latitude,
+      lng: pos.coords.longitude,
+      accuracy: pos.coords.accuracy,
+      timestamp: now,
+    });
+  }
+
+  function onPositionError(err){
+    gpsInfo.classList.remove('visible');
+    gpsError.classList.add('visible');
+    if (err.code === err.PERMISSION_DENIED) {
+      gpsError.textContent = 'Localisation refusée — autorisez-la dans les réglages du navigateur.';
+    } else {
+      gpsError.textContent = 'Position indisponible : ' + err.message;
+    }
+    trackSwitch.classList.remove('on');
+    stopTracking();
+  }
+
+  function startTracking(){
+    if (!('geolocation' in navigator)) {
+      gpsError.textContent = 'Géolocalisation non disponible sur cet appareil.';
+      gpsError.classList.add('visible');
+      return;
+    }
+    watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+    });
+    trackSwitch.classList.add('on');
+  }
+
+  function stopTracking(){
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    trackSwitch.classList.remove('on');
+    gpsInfo.classList.remove('visible');
+  }
+
+  trackSwitch.addEventListener('click', () => {
+    if (watchId === null) startTracking(); else stopTracking();
+  });
+
+  // --- Signalement d'événement (photo + position ponctuelle + note) ---
+  const eventPhotoBtn = document.getElementById('eventPhotoBtn');
+  const eventPhotoInput = document.getElementById('eventPhotoInput');
+  const eventForm = document.getElementById('eventForm');
+  const eventPreview = document.getElementById('eventPreview');
+  const eventNote = document.getElementById('eventNote');
+  const eventSendBtn = document.getElementById('eventSendBtn');
+  const eventStatus = document.getElementById('eventStatus');
+
+  let pendingFile = null;
+  let pendingPosition = null;
+
+  eventPhotoBtn.addEventListener('click', () => eventPhotoInput.click());
+
+  eventPhotoInput.addEventListener('change', () => {
+    const file = eventPhotoInput.files[0];
+    if (!file) return;
+    pendingFile = file;
+    pendingPosition = null;
+
+    eventPreview.src = URL.createObjectURL(file);
+    eventPreview.classList.add('visible');
+    eventForm.classList.add('visible');
+    eventStatus.className = 'event-status visible pending';
+    eventStatus.textContent = 'Localisation en cours…';
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        pendingPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        eventStatus.classList.remove('visible');
+      },
+      (err) => {
+        eventStatus.className = 'event-status visible error';
+        eventStatus.textContent = 'Position indisponible — impossible de géolocaliser ce signalement.';
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  });
+
+  eventSendBtn.addEventListener('click', async () => {
+    if (!pendingFile || !pendingPosition) {
+      eventStatus.className = 'event-status visible error';
+      eventStatus.textContent = 'Photo ou position manquante.';
+      return;
+    }
+
+    eventSendBtn.disabled = true;
+    eventStatus.className = 'event-status visible pending';
+    eventStatus.textContent = 'Envoi en cours…';
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', pendingFile);
+      formData.append('agentName', agentName);
+      formData.append('lat', String(pendingPosition.lat));
+      formData.append('lng', String(pendingPosition.lng));
+      formData.append('note', eventNote.value.trim());
+
+      const res = await fetch('/upload-event', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Échec de l\'envoi.');
+      const { id, url } = await res.json();
+
+      sendWs({
+        type: 'event-marker',
+        id,
+        agentName,
+        lat: pendingPosition.lat,
+        lng: pendingPosition.lng,
+        timestamp: Date.now(),
+        photoUrl: url,
+        note: eventNote.value.trim(),
+      });
+
+      eventStatus.className = 'event-status visible ok';
+      eventStatus.textContent = 'Signalement envoyé.';
+      setTimeout(() => {
+        eventForm.classList.remove('visible');
+        eventPreview.classList.remove('visible');
+        eventStatus.classList.remove('visible');
+        eventNote.value = '';
+        eventPhotoInput.value = '';
+        pendingFile = null;
+        pendingPosition = null;
+      }, 1800);
+    } catch (e) {
+      eventStatus.className = 'event-status visible error';
+      eventStatus.textContent = e.message;
+    } finally {
+      eventSendBtn.disabled = false;
+    }
+  });
+
+  // --- PWA ---
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
